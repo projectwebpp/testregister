@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LINE LIFF Share Demo</title>
-    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/versions/2.22.3/sdk.js"></script>
+    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -73,7 +73,6 @@
             <h3>ตัวอย่าง Flex Message ที่จะแชร์:</h3>
             <p><strong>หัวข้อ:</strong> สวัสดีจาก LIFF App!</p>
             <p><strong>เนื้อหา:</strong> นี่คือข้อความตัวอย่างจาก ShareTargetPicker</p>
-           <p><strong>By:</strong>ครบเครื่องเรื่องไอที</p>
         </div>
 
         <button id="shareBtn" class="share-btn" onclick="shareMessage()">
@@ -91,15 +90,20 @@
         // Initialize LIFF
         window.onload = function() {
             liff.init({
-                liffId: '1661515542-YKEGoQXj' // ใส่ LIFF ID ของคุณที่นี่
+                liffId: '1661515542-YKEGoQXj'
             }).then(() => {
                 console.log('LIFF initialized successfully');
+                console.log('LIFF isLoggedIn:', liff.isLoggedIn());
+                console.log('LIFF Context:', liff.getContext());
+                
                 if (!liff.isLoggedIn()) {
                     liff.login();
+                } else {
+                    showStatus('เชื่อมต่อ LINE สำเร็จ', 'success');
                 }
             }).catch((err) => {
                 console.error('LIFF initialization failed', err);
-                showStatus('ไม่สามารถเชื่อมต่อกับ LINE ได้', 'error');
+                showStatus('ไม่สามารถเชื่อมต่อกับ LINE ได้: ' + err.message, 'error');
             });
         };
 
@@ -112,7 +116,7 @@
                     type: 'bubble',
                     hero: {
                         type: 'image',
-                        url: 'https://miro.medium.com/v2/resize:fit:4800/format:webp/1*sE8GWedeZd6qpVG9HYu-lg.jpeg',
+                        url: 'https://via.placeholder.com/320x213/00B900/FFFFFF?text=LIFF+App',
                         size: 'full',
                         aspectRatio: '20:13',
                         aspectMode: 'cover'
@@ -172,7 +176,7 @@
                                 action: {
                                     type: 'uri',
                                     label: '🔗 เปิด LIFF App',
-                                    uri: liff.getLineVersion() ? liff.permanent(liff.getContext().liffId) : window.location.href
+                                    uri: 'https://line.me/R/app/1661515542-YKEGoQXj'
                                 }
                             }
                         ]
@@ -183,16 +187,31 @@
 
         // แชร์ข้อความโดยให้เลือกเพื่อน
         async function shareMessage() {
+            console.log('Share button clicked');
+            
             if (!liff.isLoggedIn()) {
                 showStatus('กรุณาเข้าสู่ระบบ LINE ก่อน', 'error');
+                liff.login();
+                return;
+            }
+
+            // ตรวจสอบว่า shareTargetPicker พร้อมใช้งานหรือไม่
+            if (!liff.isApiAvailable('shareTargetPicker')) {
+                showStatus('ShareTargetPicker ไม่พร้อมใช้งานในเวอร์ชันนี้', 'error');
+                console.error('shareTargetPicker is not available');
                 return;
             }
 
             try {
+                showStatus('กำลังเปิดหน้าต่างเลือกเพื่อน...', 'success');
                 const flexMessage = createFlexMessage();
+                
+                console.log('Calling shareTargetPicker with message:', flexMessage);
                 
                 // เปิด ShareTargetPicker
                 const result = await liff.shareTargetPicker([flexMessage]);
+                
+                console.log('ShareTargetPicker result:', result);
                 
                 if (result) {
                     showStatus('แชร์ข้อความสำเร็จ! 🎉', 'success');
@@ -202,8 +221,15 @@
                 }
                 
             } catch (error) {
-                console.error('Share error:', error);
-                showStatus('เกิดข้อผิดพลาดในการแชร์: ' + error.message, 'error');
+                console.error('Share error details:', error);
+                
+                if (error.code === 'FORBIDDEN') {
+                    showStatus('ไม่มีสิทธิ์ในการแชร์ กรุณาตรวจสอบการตั้งค่า LIFF', 'error');
+                } else if (error.code === 'INTERNAL_ERROR') {
+                    showStatus('เกิดข้อผิดพลาดภายใน กรุณาลองใหม่อีกครั้ง', 'error');
+                } else {
+                    showStatus('เกิดข้อผิดพลาดในการแชร์: ' + (error.message || error), 'error');
+                }
             }
         }
 
