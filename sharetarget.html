@@ -113,12 +113,28 @@
                     // เปิดใช้งานปุ่ม
                     document.getElementById('shareBtn').disabled = false;
                     document.getElementById('shareGroupBtn').disabled = false;
+                    
+                    // แชร์อัตโนมัติเมื่อเปิด LIFF
+                    setTimeout(() => {
+                        autoShare();
+                    }, 1000);
                 }
             }).catch((err) => {
                 console.error('❌ LIFF initialization failed:', err);
                 showStatus('❌ ไม่สามารถเชื่อมต่อกับ LINE ได้: ' + err.message, 'error');
             });
         });
+
+        // แชร์อัตโนมัติ
+        async function autoShare() {
+            console.log('🚀 Starting auto share...');
+            showStatus('🚀 กำลังเตรียมแชร์อัตโนมัติ...', 'success');
+            
+            // รอ 1 วินาทีแล้วแชร์
+            setTimeout(() => {
+                shareMessage();
+            }, 1000);
+        }
 
         // สร้าง Flex Message
         function createFlexMessage() {
