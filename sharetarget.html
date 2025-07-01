@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LINE LIFF Share Demo</title>
-    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/versions/2.21.4/sdk.js"></script>
+    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -68,40 +68,57 @@
 <body>
     <div class="container">
         <h1>📤 LINE Share Demo</h1>
-
+        
         <div class="message-preview">
             <h3>ตัวอย่าง Flex Message ที่จะแชร์:</h3>
             <p><strong>หัวข้อ:</strong> สวัสดีจาก LIFF App!</p>
             <p><strong>เนื้อหา:</strong> นี่คือข้อความตัวอย่างจาก ShareTargetPicker</p>
         </div>
-        <button id="shareBtn" class="share-btn" onclick="shareMessage()">
+
+        <button id="shareBtn" class="share-btn" onclick="shareMessage()" disabled>
             🎯 เลือกเพื่อนแล้วแชร์
         </button>
-        <button id="shareGroupBtn" class="share-btn" onclick="shareToGroup()">
+
+        <button id="shareGroupBtn" class="share-btn" onclick="shareToGroup()" disabled>
             👥 แชร์ในกลุ่ม
         </button>
+
         <div id="status"></div>
     </div>
+
     <script>
         // Initialize LIFF
-        window.onload = function() {
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, initializing LIFF...');
+            
             liff.init({
-                liffId: '1661515542-YKEGoQXj' // Replace with your LIFF ID
+                liffId: '1661515542-YKEGoQXj'
             }).then(() => {
-                console.log('LIFF initialized successfully');
-                console.log('LIFF isLoggedIn:', liff.isLoggedIn());
-                console.log('LIFF Context:', liff.getContext());
-
+                console.log('✅ LIFF initialized successfully');
+                console.log('📱 OS:', liff.getOS());
+                console.log('📲 LINE Version:', liff.getLineVersion());
+                console.log('🔐 isLoggedIn:', liff.isLoggedIn());
+                console.log('📍 Context:', liff.getContext());
+                
+                // ตรวจสอบ API ที่สามารถใช้ได้
+                console.log('🔧 shareTargetPicker available:', liff.isApiAvailable('shareTargetPicker'));
+                console.log('🔧 sendMessages available:', liff.isApiAvailable('sendMessages'));
+                
                 if (!liff.isLoggedIn()) {
+                    console.log('🔑 Not logged in, redirecting to login...');
                     liff.login();
                 } else {
-                    showStatus('เชื่อมต่อ LINE สำเร็จ', 'success');
+                    showStatus('✅ เชื่อมต่อ LINE สำเร็จ', 'success');
+                    
+                    // เปิดใช้งานปุ่ม
+                    document.getElementById('shareBtn').disabled = false;
+                    document.getElementById('shareGroupBtn').disabled = false;
                 }
             }).catch((err) => {
-                console.error('LIFF initialization failed', err);
-                showStatus('ไม่สามารถเชื่อมต่อกับ LINE ได้: ' + err.message, 'error');
+                console.error('❌ LIFF initialization failed:', err);
+                showStatus('❌ ไม่สามารถเชื่อมต่อกับ LINE ได้: ' + err.message, 'error');
             });
-        };
+        });
 
         // สร้าง Flex Message
         function createFlexMessage() {
@@ -112,7 +129,7 @@
                     type: 'bubble',
                     hero: {
                         type: 'image',
-                        url: 'https://miro.medium.com/v2/resize:fit:4800/format:webp/1*sE8GWedeZd6qpVG9HYu-lg.jpeg',
+                        url: 'https://via.placeholder.com/320x213/00B900/FFFFFF?text=LIFF+App',
                         size: 'full',
                         aspectRatio: '20:13',
                         aspectMode: 'cover'
@@ -172,7 +189,7 @@
                                 action: {
                                     type: 'uri',
                                     label: '🔗 เปิด LIFF App',
-                                    uri: 'https://line.me/R/app/1661515542-YKEGoQXj' // Replace with your LIFF ID
+                                    uri: 'https://line.me/R/app/1661515542-YKEGoQXj'
                                 }
                             }
                         ]
@@ -183,49 +200,80 @@
 
         // แชร์ข้อความโดยให้เลือกเพื่อน
         async function shareMessage() {
-            console.log('Share button clicked');
-
+            console.log('🎯 Share button clicked');
+            
             if (!liff.isLoggedIn()) {
-                showStatus('กรุณาเข้าสู่ระบบ LINE ก่อน', 'error');
+                showStatus('🔑 กรุณาเข้าสู่ระบบ LINE ก่อน', 'error');
                 liff.login();
+                return;
+            }
+
+            // ตรวจสอบว่าใช้งานใน LINE app หรือไม่
+            if (!liff.isInClient()) {
+                showStatus('⚠️ กรุณาเปิดใน LINE App เพื่อใช้งาน ShareTargetPicker', 'error');
                 return;
             }
 
             // ตรวจสอบว่า shareTargetPicker พร้อมใช้งานหรือไม่
             if (!liff.isApiAvailable('shareTargetPicker')) {
-                showStatus('ShareTargetPicker ไม่พร้อมใช้งานในเวอร์ชันนี้', 'error');
-                console.error('shareTargetPicker is not available');
+                showStatus('❌ ShareTargetPicker ไม่พร้อมใช้งาน', 'error');
+                console.error('shareTargetPicker is not available. Available APIs:', {
+                    shareTargetPicker: liff.isApiAvailable('shareTargetPicker'),
+                    sendMessages: liff.isApiAvailable('sendMessages'),
+                    openWindow: liff.isApiAvailable('openWindow'),
+                    scanCode: liff.isApiAvailable('scanCode')
+                });
                 return;
             }
 
             try {
-                showStatus('กำลังเปิดหน้าต่างเลือกเพื่อน...', 'success');
+                showStatus('⏳ กำลังเปิดหน้าต่างเลือกเพื่อน...', 'success');
+                
+                // ปิดการใช้งานปุ่มชั่วคราว
+                document.getElementById('shareBtn').disabled = true;
+                
                 const flexMessage = createFlexMessage();
-
-                console.log('Calling shareTargetPicker with message:', flexMessage);
-
+                console.log('📤 Calling shareTargetPicker with message:', flexMessage);
+                
                 // เปิด ShareTargetPicker
                 const result = await liff.shareTargetPicker([flexMessage]);
-
-                console.log('ShareTargetPicker result:', result);
-
+                
+                console.log('✅ ShareTargetPicker result:', result);
+                
                 if (result) {
-                    showStatus('แชร์ข้อความสำเร็จ! 🎉', 'success');
-                    console.log('Share success:', result);
+                    showStatus('🎉 แชร์ข้อความสำเร็จ!', 'success');
                 } else {
-                    showStatus('ยกเลิกการแชร์', 'error');
+                    showStatus('❌ ยกเลิกการแชร์', 'error');
                 }
-
+                
             } catch (error) {
-                console.error('Share error details:', error);
-
-                if (error.code === 'FORBIDDEN') {
-                    showStatus('ไม่มีสิทธิ์ในการแชร์ กรุณาตรวจสอบการตั้งค่า LIFF', 'error');
-                } else if (error.code === 'INTERNAL_ERROR') {
-                    showStatus('เกิดข้อผิดพลาดภายใน กรุณาลองใหม่อีกครั้ง', 'error');
+                console.error('❌ Share error details:', error);
+                
+                let errorMessage = 'เกิดข้อผิดพลาดในการแชร์';
+                
+                if (error.code) {
+                    switch (error.code) {
+                        case 'FORBIDDEN':
+                            errorMessage = '🚫 ไม่มีสิทธิ์ในการแชร์ กรุณาตรวจสอบการตั้งค่า LIFF';
+                            break;
+                        case 'INTERNAL_ERROR':
+                            errorMessage = '⚠️ เกิดข้อผิดพลาดภายใน กรุณาลองใหม่อีกครั้ง';
+                            break;
+                        case 'INVALID_ARGUMENT':
+                            errorMessage = '📝 ข้อมูลข้อความไม่ถูกต้อง';
+                            break;
+                        default:
+                            errorMessage = `❌ Error Code: ${error.code} - ${error.message || error}`;
+                    }
                 } else {
-                    showStatus('เกิดข้อผิดพลาดในการแชร์: ' + (error.message || error), 'error');
+                    errorMessage = '❌ ' + (error.message || error.toString());
                 }
+                
+                showStatus(errorMessage, 'error');
+                
+            } finally {
+                // เปิดการใช้งานปุ่มอีกครั้ง
+                document.getElementById('shareBtn').disabled = false;
             }
         }
 
@@ -238,7 +286,7 @@
 
             try {
                 const context = liff.getContext();
-
+                
                 // ตรวจสอบว่าอยู่ในกลุ่มหรือไม่
                 if (context.type !== 'group' && context.type !== 'room') {
                     showStatus('ฟีเจอร์นี้ใช้ได้เฉพาะในกลุ่มเท่านั้น', 'error');
@@ -246,11 +294,11 @@
                 }
 
                 const flexMessage = createFlexMessage();
-
+                
                 // ส่งข้อความในกลุ่มปัจจุบัน
                 await liff.sendMessages([flexMessage]);
                 showStatus('ส่งข้อความในกลุ่มสำเร็จ! 🎉', 'success');
-
+                
             } catch (error) {
                 console.error('Send message error:', error);
                 showStatus('เกิดข้อผิดพลาดในการส่งข้อความ: ' + error.message, 'error');
@@ -262,7 +310,7 @@
             const statusDiv = document.getElementById('status');
             statusDiv.textContent = message;
             statusDiv.className = 'status ' + type;
-
+            
             // ซ่อนข้อความหลังจาก 3 วินาที
             setTimeout(() => {
                 statusDiv.textContent = '';
