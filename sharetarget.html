@@ -201,80 +201,271 @@
         // สร้าง Flex Message
         function createFlexMessage() {
             return {
-                type: 'flex',
-                altText: 'สวัสดีจาก LIFF App!',
-                contents: {
-                    type: 'bubble',
-                    hero: {
-                        type: 'image',
-                        url: 'https://vos.line-scdn.net/line-api-web-cms/liff-web___1.png',
-                        size: 'full',
-                        aspectRatio: '20:13',
-                        aspectMode: 'cover'
-                    },
-                    body: {
-                        type: 'box',
-                        layout: 'vertical',
-                        contents: [
-                            {
-                                type: 'text',
-                                text: '🎉 สวัสดีจาก LIFF App!',
-                                weight: 'bold',
-                                size: 'xl',
-                                color: '#00B900'
-                            },
-                            {
-                                type: 'text',
-                                text: 'นี่คือข้อความตัวอย่างที่ส่งผ่าน ShareTargetPicker',
-                                size: 'sm',
-                                color: '#666666',
-                                margin: 'md',
-                                wrap: true
-                            },
-                            {
-                                type: 'separator',
-                                margin: 'md'
-                            },
-                            {
-                                type: 'box',
-                                layout: 'vertical',
-                                margin: 'md',
-                                contents: [
-                                    {
-                                        type: 'text',
-                                        text: '📅 วันที่: ' + new Date().toLocaleDateString('th-TH'),
-                                        size: 'sm',
-                                        color: '#888888'
-                                    },
-                                    {
-                                        type: 'text',
-                                        text: '⏰ เวลา: ' + new Date().toLocaleTimeString('th-TH'),
-                                        size: 'sm',
-                                        color: '#888888'
-                                    }
-                                ]
-                            }
-                        ]
-                    },
-                    footer: {
-                        type: 'box',
-                        layout: 'vertical',
-                        contents: [
-                            {
-                                type: 'button',
-                                style: 'primary',
-                                height: 'sm',
-                                action: {
-                                    type: 'uri',
-                                    label: '🔗 เปิด LIFF App',
-                                    uri: 'https://line.me/R/app/1661515542-YKEGoQXj'
-                                }
-                            }
-                        ]
-                    }
+    type: "flex",
+    altText: "📣 คอร์สระบบออมทองด้วย Mini App + Google Apps Script ดึง API ราคาทองมาใช้ในการซื้อขาย ",
+    contents: {
+  "type": "carousel",
+  "contents": [
+    {
+      "type": "bubble",
+      "size": "mega",
+      "header": {
+        "type": "box",
+        "layout": "vertical",
+        "paddingAll": "20px",
+        "backgroundColor": "#A980D8",
+        "contents": [
+          {
+            "type": "text",
+            "text": "📚 คอร์สระบบออมทอง",
+            "weight": "bold",
+            "size": "lg",
+            "color": "#ffffff"
+          },
+          {
+            "type": "text",
+            "text": "เนื้อหาหลัก & ราคาทองคำ",
+            "wrap": true,
+            "color": "#ffffff",
+            "size": "sm"
+          }
+        ]
+      },
+      "hero": {
+        "type": "image",
+        "url": "https://iili.io/FuZbEep.jpg",
+        "size": "full",
+        "aspectRatio": "1:1",
+        "aspectMode": "cover"
+      },
+      "body": {
+        "type": "box",
+        "layout": "vertical",
+        "spacing": "md",
+        "contents": [
+          {
+            "type": "text",
+            "text": "🔹 เนื้อหาหลัก",
+            "weight": "bold",
+            "color": "#7D4FC0",
+            "size": "md"
+          },
+          {
+            "type": "text",
+            "wrap": true,
+            "size": "sm",
+            "text": "✅ เชื่อมโยงแนวคิดระบบออมทอง\n✅ ฟีเจอร์หลักของระบบ (ดึงราคา, ซื้อขาย, เติมถอน)\n✅ โครงสร้างระบบบน Mini App และ LIFF\n✅ แยกบทบาทผู้ใช้ (User & Admin)"
+          },
+          {
+            "type": "text",
+            "text": "🔹 API ราคาทองคำ",
+            "weight": "bold",
+            "color": "#7D4FC0",
+            "size": "md"
+          },
+          {
+            "type": "text",
+            "wrap": true,
+            "size": "sm",
+            "text": "✅ แหล่ง API ราคาทองคำ\n✅ ดึงข้อมูลแบบเรียลไทม์\n✅ ตั้ง Cron job อัปเดตราคา\n✅ แสดงราคาทองคำล่าสุดในระบบ"
+          }
+        ]
+      }
+    },
+    {
+      "type": "bubble",
+      "size": "mega",
+      "header": {
+        "type": "box",
+        "layout": "vertical",
+        "paddingAll": "20px",
+        "backgroundColor": "#C19DF7",
+        "contents": [
+          {
+            "type": "text",
+            "text": "💰 เติม/ถอน/ซื้อ-ขาย",
+            "weight": "bold",
+            "size": "lg",
+            "color": "#ffffff"
+          },
+          {
+            "type": "text",
+            "text": "ระบบธุรกรรมทองคำ",
+            "wrap": true,
+            "color": "#ffffff",
+            "size": "sm"
+          }
+        ]
+      },
+      "body": {
+        "type": "box",
+        "layout": "vertical",
+        "spacing": "md",
+        "contents": [
+          {
+            "type": "text",
+            "text": "🔹 เติมเงิน",
+            "weight": "bold",
+            "color": "#7D4FC0",
+            "size": "md"
+          },
+          {
+            "type": "text",
+            "wrap": true,
+            "size": "sm",
+            "text": "✅ โอนเงินเข้าสู่ระบบ\n✅ อัปโหลดสลิป + บันทึก Google Drive\n✅ บันทึกข้อมูลลง Google Sheet\n✅ แจ้งเตือนแอดมิน\n✅ แอดมินอนุมัติ"
+          },
+          {
+            "type": "text",
+            "text": "🔹 ถอนเงิน",
+            "weight": "bold",
+            "color": "#7D4FC0",
+            "size": "md"
+          },
+          {
+            "type": "text",
+            "wrap": true,
+            "size": "sm",
+            "text": "✅ ขอถอนเงินผ่านฟอร์ม\n✅ แอดมินอนุมัติ\n✅ โอนเงินเข้าบัญชีผู้ใช้ (จำลอง)"
+          },
+          {
+            "type": "text",
+            "text": "🔹 ซื้อ/ขายทอง",
+            "weight": "bold",
+            "color": "#7D4FC0",
+            "size": "md"
+          },
+          {
+            "type": "text",
+            "wrap": true,
+            "size": "sm",
+            "text": "✅ ซื้อทองจากยอดเงิน\n✅ คำนวณราคาทองอัตโนมัติ\n✅ เพิ่ม/ลดทองในบัญชี\n✅ รับเงินคืนเข้ากระเป๋า"
+          }
+        ]
+      }
+    },
+    {
+      "type": "bubble",
+      "size": "mega",
+      "header": {
+        "type": "box",
+        "layout": "vertical",
+        "paddingAll": "20px",
+        "backgroundColor": "#7D4FC0",
+        "contents": [
+          {
+            "type": "text",
+            "text": "📦 กระเป๋า & จัดการ",
+            "weight": "bold",
+            "size": "lg",
+            "color": "#ffffff"
+          },
+          {
+            "type": "text",
+            "text": "แอดมิน & LIFF & Mini App",
+            "wrap": true,
+            "color": "#ffffff",
+            "size": "sm"
+          }
+        ]
+      },
+      "body": {
+        "type": "box",
+        "layout": "vertical",
+        "spacing": "md",
+        "contents": [
+          {
+            "type": "text",
+            "text": "🔹 กระเป๋า & ประวัติ",
+            "weight": "bold",
+            "color": "#7D4FC0",
+            "size": "md"
+          },
+          {
+            "type": "text",
+            "wrap": true,
+            "size": "sm",
+            "text": "✅ ดูยอดเงิน/ทองสะสม\n✅ อัปเดตยอดแบบเรียลไทม์\n✅ บันทึกรายการย้อนหลัง (เติม, ถอน, ซื้อ, ขาย)"
+          },
+          {
+            "type": "text",
+            "text": "🔹 สิทธิ์แอดมิน",
+            "weight": "bold",
+            "color": "#7D4FC0",
+            "size": "md"
+          },
+          {
+            "type": "text",
+            "wrap": true,
+            "size": "sm",
+            "text": "✅ เข้าระบบเฉพาะแอดมิน\n✅ ตรวจสอบ/อนุมัติธุรกรรม\n✅ ปฏิเสธ/ลบธุรกรรมผิดปกติ\n✅ จัดการผู้ใช้และข้อมูล"
+          },
+          {
+            "type": "text",
+            "text": "🔹 การเผยแพร่ผ่าน LIFF",
+            "weight": "bold",
+            "color": "#7D4FC0",
+            "size": "md"
+          },
+          {
+            "type": "text",
+            "wrap": true,
+            "size": "sm",
+            "text": "✅ UI HTML/CSS + Tailwind รองรับ LIFF\n✅ เชื่อม Google Apps Script กับ Web App\n✅ Deploy ผ่าน LIFF ID\n✅ เชื่อมหน้าเว็บผ่าน Rich Menu / Flex\n✅ ทดสอบใช้งานจริง"
+          }
+        ]
+      },
+      "footer": {
+        "type": "box",
+        "layout": "vertical",
+        "spacing": "sm",
+        "contents": [
+          {
+            "type": "box",
+            "layout": "horizontal",
+            "contents": [
+              {
+                "type": "button",
+                "style": "primary",
+                "flex": 5,
+                "action": {
+                  "type": "message",
+                  "label": "📚ลงคอร์สนี้",
+                  "text": "ระบบออมทองผ่านminiappและLIFF"
                 }
-            };
-        }
+              },
+              {
+                "type": "button",
+                "style": "secondary",
+                "color": "#8C9EFF",
+                "flex": 5,
+                "action": {
+                  "type": "message",
+                  "label": "🏆 Demo",
+                  "text": "hello"
+                },
+                "offsetStart": "2px",
+                "offsetEnd": "2px"
+              }
+            ]
+          },
+          {
+            "type": "button",
+            "style": "primary",
+            "margin": "md",
+            "action": {
+              "type": "uri",
+              "label": "🎥 ดูคลิป Demo",
+              "uri": "https://youtube.com/shorts/9nW2i3UCLbg?si=BrD-6wd2Gr_dv2Je"
+            },
+            "color": "#fa1805"
+          }
+        ]
+      }
+    }
+  ]
+}
+  }
 
         // แชร์ข้อความโดยให้เลือกเพื่อน
         async function shareMessage() {
