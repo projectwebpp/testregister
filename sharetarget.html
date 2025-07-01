@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LINE LIFF Share Demo | ครบเครื่องเรื่องไอที</title>
-    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/versions/2.21.4/sdk.js"></script>
+    <title>LINE LIFF Share Demo</title>
+    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
             padding: 20px;
             background-color: #f5f5f5;
-            display: none; /* Hide the main content initially */
+            display: none; /* ซ่อนหน้าต่างจนกว่าจะพร้อม */
         }
         .container {
             max-width: 400px;
@@ -99,41 +99,41 @@
     </style>
 </head>
 <body>
-    <div id="loadingScreen" class="loading">
-        <div class="spinner"></div>
-        <h1>กำลังโหลด...</h1>
-    </div>
     <div class="container">
         <h1>📤 LINE Share Demo</h1>
-
+        
         <div class="message-preview">
             <h3>ตัวอย่าง Flex Message ที่จะแชร์:</h3>
             <p><strong>หัวข้อ:</strong> สวัสดีจาก LIFF App!</p>
             <p><strong>เนื้อหา:</strong> นี่คือข้อความตัวอย่างจาก ShareTargetPicker</p>
         </div>
+
         <button id="shareBtn" class="share-btn" onclick="shareMessage()" disabled>
             🎯 เลือกเพื่อนแล้วแชร์
         </button>
+
         <button id="shareGroupBtn" class="share-btn" onclick="shareToGroup()" disabled>
             👥 แชร์ในกลุ่ม
         </button>
+
         <div id="status"></div>
     </div>
+
     <script>
         // Initialize LIFF
         document.addEventListener('DOMContentLoaded', function() {
             console.log('DOM loaded, initializing LIFF...');
-
+            
             liff.init({
                 liffId: '1661515542-YKEGoQXj'
             }).then(() => {
                 console.log('✅ LIFF initialized successfully');
-
+                
                 if (!liff.isLoggedIn()) {
                     console.log('🔑 Not logged in, redirecting to login...');
                     liff.login();
                 } else {
-                    // Call immediateShare function to share without showing UI
+                    // เรียก ShareTargetPicker ทันทีโดยไม่แสดงหน้าจอ
                     immediateShare();
                 }
             }).catch((err) => {
@@ -142,17 +142,17 @@
             });
         });
 
-        // Share immediately without showing UI
+        // แชร์ทันทีโดยไม่แสดงหน้า UI
         async function immediateShare() {
             console.log('🚀 Starting immediate share...');
-
-            // Check if running in LINE app
+            
+            // ตรวจสอบว่าใช้งานใน LINE app หรือไม่
             if (!liff.isInClient()) {
                 showError('กรุณาเปิดใน LINE App เพื่อใช้งาน ShareTargetPicker');
                 return;
             }
 
-            // Check if shareTargetPicker is available
+            // ตรวจสอบว่า shareTargetPicker พร้อมใช้งานหรือไม่
             if (!liff.isApiAvailable('shareTargetPicker')) {
                 showError('ShareTargetPicker ไม่พร้อมใช้งาน');
                 return;
@@ -161,330 +161,175 @@
             try {
                 const flexMessage = createFlexMessage();
                 console.log('📤 Opening ShareTargetPicker immediately...');
-
-                // Open ShareTargetPicker immediately
+                console.log('Message to share:', JSON.stringify(flexMessage, null, 2));
+                
+                // ทดสอบ Flex Message ก่อนแชร์
+                if (!validateFlexMessage(flexMessage)) {
+                    showError('รูปแบบ Flex Message ไม่ถูกต้อง');
+                    return;
+                }
+                
+                // เปิด ShareTargetPicker ทันที
                 const result = await liff.shareTargetPicker([flexMessage]);
-
+                
                 console.log('✅ ShareTargetPicker result:', result);
-
+                
                 if (result) {
                     console.log('🎉 Share successful, closing LIFF...');
-                    // Close LIFF immediately after successful share
+                    // ปิด LIFF ทันทีหลังแชร์สำเร็จ
                     liff.closeWindow();
                 } else {
                     console.log('❌ Share cancelled, closing LIFF...');
-                    // Close LIFF if share is cancelled
+                    // ปิด LIFF หากยกเลิกการแชร์
                     liff.closeWindow();
                 }
-
+                
             } catch (error) {
                 console.error('❌ Share error:', error);
+                console.error('Error details:', {
+                    code: error.code,
+                    message: error.message,
+                    stack: error.stack
+                });
                 showError('เกิดข้อผิดพลาดในการแชร์: ' + (error.message || error));
             }
         }
 
-        // Show Error and UI when there is a problem
+        // ตรวจสอบรูปแบบ Flex Message
+        function validateFlexMessage(message) {
+            try {
+                // ตรวจสอบขนาดของ JSON
+                const messageSize = JSON.stringify(message).length;
+                console.log('📏 Flex Message size:', messageSize, 'characters');
+                
+                if (messageSize > 100000) {
+                    console.error('❌ Flex Message too large:', messageSize);
+                    return false;
+                }
+                
+                // ตรวจสอบ structure พื้นฐาน
+                if (!message.type || !message.contents) {
+                    console.error('❌ Invalid Flex Message structure');
+                    return false;
+                }
+                
+                return true;
+            } catch (error) {
+                console.error('❌ Flex Message validation error:', error);
+                return false;
+            }
+        }
+
+        // แสดง Error และหน้า UI เมื่อเกิดปัญหา
         function showError(message) {
             document.getElementById('loadingScreen').style.display = 'none';
             document.querySelector('.container').style.display = 'block';
             document.body.style.display = 'block';
-
+            
             const statusDiv = document.getElementById('status');
             statusDiv.textContent = message;
             statusDiv.className = 'status error';
-
-            // Enable backup buttons
+            
+            // เปิดใช้งานปุ่มสำรอง
             document.getElementById('shareBtn').disabled = false;
             document.getElementById('shareGroupBtn').disabled = false;
         }
 
-        // Create Flex Message
+        // สร้าง Flex Message
         function createFlexMessage() {
             return {
                 type: 'flex',
-                altText: '📣 คอร์สระบบออมทองด้วย Mini App + Google Apps Script ดึง API ราคาทองมาใช้ในการซื้อขาย',
+                altText: 'สวัสดีจาก LIFF App!',
                 contents: {
-                    type: "carousel",
-                    contents: [
-                        {
-                            type: "bubble",
-                            size: "mega",
-                            header: {
-                                type: "box",
-                                layout: "vertical",
-                                paddingAll: "20px",
-                                backgroundColor: "#A980D8",
+                    type: 'bubble',
+                    hero: {
+                        type: 'image',
+                        url: 'https://via.placeholder.com/320x213/00B900/FFFFFF?text=LIFF+App',
+                        size: 'full',
+                        aspectRatio: '20:13',
+                        aspectMode: 'cover'
+                    },
+                    body: {
+                        type: 'box',
+                        layout: 'vertical',
+                        contents: [
+                            {
+                                type: 'text',
+                                text: '🎉 สวัสดีจาก LIFF App!',
+                                weight: 'bold',
+                                size: 'xl',
+                                color: '#00B900'
+                            },
+                            {
+                                type: 'text',
+                                text: 'นี่คือข้อความตัวอย่างที่ส่งผ่าน ShareTargetPicker',
+                                size: 'sm',
+                                color: '#666666',
+                                margin: 'md',
+                                wrap: true
+                            },
+                            {
+                                type: 'separator',
+                                margin: 'md'
+                            },
+                            {
+                                type: 'box',
+                                layout: 'vertical',
+                                margin: 'md',
                                 contents: [
                                     {
-                                        type: "text",
-                                        text: "📚 คอร์สระบบออมทอง",
-                                        weight: "bold",
-                                        size: "lg",
-                                        color: "#ffffff"
+                                        type: 'text',
+                                        text: '📅 วันที่: ' + new Date().toLocaleDateString('th-TH'),
+                                        size: 'sm',
+                                        color: '#888888'
                                     },
                                     {
-                                        type: "text",
-                                        text: "เนื้อหาหลัก & ราคาทองคำ",
-                                        wrap: true,
-                                        color: "#ffffff",
-                                        size: "sm"
-                                    }
-                                ]
-                            },
-                            hero: {
-                                type: "image",
-                                url: "https://iili.io/FuZbEep.jpg",
-                                size: "full",
-                                aspectRatio: "1:1",
-                                aspectMode: "cover"
-                            },
-                            body: {
-                                type: "box",
-                                layout: "vertical",
-                                spacing: "md",
-                                contents: [
-                                    {
-                                        type: "text",
-                                        text: "🔹 เนื้อหาหลัก",
-                                        weight: "bold",
-                                        color: "#7D4FC0",
-                                        size: "md"
-                                    },
-                                    {
-                                        type: "text",
-                                        wrap: true,
-                                        size: "sm",
-                                        text: "✅ เชื่อมโยงแนวคิดระบบออมทอง\n✅ ฟีเจอร์หลักของระบบ (ดึงราคา, ซื้อขาย, เติมถอน)\n✅ โครงสร้างระบบบน Mini App และ LIFF\n✅ แยกบทบาทผู้ใช้ (User & Admin)"
-                                    },
-                                    {
-                                        type: "text",
-                                        text: "🔹 API ราคาทองคำ",
-                                        weight: "bold",
-                                        color: "#7D4FC0",
-                                        size: "md"
-                                    },
-                                    {
-                                        type: "text",
-                                        wrap: true,
-                                        size: "sm",
-                                        text: "✅ แหล่ง API ราคาทองคำ\n✅ ดึงข้อมูลแบบเรียลไทม์\n✅ ตั้ง Cron job อัปเดตราคา\n✅ แสดงราคาทองคำล่าสุดในระบบ"
+                                        type: 'text',
+                                        text: '⏰ เวลา: ' + new Date().toLocaleTimeString('th-TH'),
+                                        size: 'sm',
+                                        color: '#888888'
                                     }
                                 ]
                             }
-                        },
-                        {
-                            type: "bubble",
-                            size: "mega",
-                            header: {
-                                type: "box",
-                                layout: "vertical",
-                                paddingAll: "20px",
-                                backgroundColor: "#C19DF7",
-                                contents: [
-                                    {
-                                        type: "text",
-                                        text: "💰 เติม/ถอน/ซื้อ-ขาย",
-                                        weight: "bold",
-                                        size: "lg",
-                                        color: "#ffffff"
-                                    },
-                                    {
-                                        type: "text",
-                                        text: "ระบบธุรกรรมทองคำ",
-                                        wrap: true,
-                                        color: "#ffffff",
-                                        size: "sm"
-                                    }
-                                ]
-                            },
-                            body: {
-                                type: "box",
-                                layout: "vertical",
-                                spacing: "md",
-                                contents: [
-                                    {
-                                        type: "text",
-                                        text: "🔹 เติมเงิน",
-                                        weight: "bold",
-                                        color: "#7D4FC0",
-                                        size: "md"
-                                    },
-                                    {
-                                        type: "text",
-                                        wrap: true,
-                                        size: "sm",
-                                        text: "✅ โอนเงินเข้าสู่ระบบ\n✅ อัปโหลดสลิป + บันทึก Google Drive\n✅ บันทึกข้อมูลลง Google Sheet\n✅ แจ้งเตือนแอดมิน\n✅ แอดมินอนุมัติ"
-                                    },
-                                    {
-                                        type: "text",
-                                        text: "🔹 ถอนเงิน",
-                                        weight: "bold",
-                                        color: "#7D4FC0",
-                                        size: "md"
-                                    },
-                                    {
-                                        type: "text",
-                                        wrap: true,
-                                        size: "sm",
-                                        text: "✅ ขอถอนเงินผ่านฟอร์ม\n✅ แอดมินอนุมัติ\n✅ โอนเงินเข้าบัญชีผู้ใช้ (จำลอง)"
-                                    },
-                                    {
-                                        type: "text",
-                                        text: "🔹 ซื้อ/ขายทอง",
-                                        weight: "bold",
-                                        color: "#7D4FC0",
-                                        size: "md"
-                                    },
-                                    {
-                                        type: "text",
-                                        wrap: true,
-                                        size: "sm",
-                                        text: "✅ ซื้อทองจากยอดเงิน\n✅ คำนวณราคาทองอัตโนมัติ\n✅ เพิ่ม/ลดทองในบัญชี\n✅ รับเงินคืนเข้ากระเป๋า"
-                                    }
-                                ]
+                        ]
+                    },
+                    footer: {
+                        type: 'box',
+                        layout: 'vertical',
+                        contents: [
+                            {
+                                type: 'button',
+                                style: 'primary',
+                                height: 'sm',
+                                action: {
+                                    type: 'uri',
+                                    label: '🔗 เปิด LIFF App',
+                                    uri: 'https://line.me/R/app/1661515542-YKEGoQXj'
+                                }
                             }
-                        },
-                        {
-                            type: "bubble",
-                            size: "mega",
-                            header: {
-                                type: "box",
-                                layout: "vertical",
-                                paddingAll: "20px",
-                                backgroundColor: "#7D4FC0",
-                                contents: [
-                                    {
-                                        type: "text",
-                                        text: "📦 กระเป๋า & จัดการ",
-                                        weight: "bold",
-                                        size: "lg",
-                                        color: "#ffffff"
-                                    },
-                                    {
-                                        type: "text",
-                                        text: "แอดมิน & LIFF & Mini App",
-                                        wrap: true,
-                                        color: "#ffffff",
-                                        size: "sm"
-                                    }
-                                ]
-                            },
-                            body: {
-                                type: "box",
-                                layout: "vertical",
-                                spacing: "md",
-                                contents: [
-                                    {
-                                        type: "text",
-                                        text: "🔹 กระเป๋า & ประวัติ",
-                                        weight: "bold",
-                                        color: "#7D4FC0",
-                                        size: "md"
-                                    },
-                                    {
-                                        type: "text",
-                                        wrap: true,
-                                        size: "sm",
-                                        text: "✅ ดูยอดเงิน/ทองสะสม\n✅ อัปเดตยอดแบบเรียลไทม์\n✅ บันทึกรายการย้อนหลัง (เติม, ถอน, ซื้อ, ขาย)"
-                                    },
-                                    {
-                                        type: "text",
-                                        text: "🔹 สิทธิ์แอดมิน",
-                                        weight: "bold",
-                                        color: "#7D4FC0",
-                                        size: "md"
-                                    },
-                                    {
-                                        type: "text",
-                                        wrap: true,
-                                        size: "sm",
-                                        text: "✅ เข้าระบบเฉพาะแอดมิน\n✅ ตรวจสอบ/อนุมัติธุรกรรม\n✅ ปฏิเสธ/ลบธุรกรรมผิดปกติ\n✅ จัดการผู้ใช้และข้อมูล"
-                                    },
-                                    {
-                                        type: "text",
-                                        text: "🔹 การเผยแพร่ผ่าน LIFF",
-                                        weight: "bold",
-                                        color: "#7D4FC0",
-                                        size: "md"
-                                    },
-                                    {
-                                        type: "text",
-                                        wrap: true,
-                                        size: "sm",
-                                        text: "✅ UI HTML/CSS + Tailwind รองรับ LIFF\n✅ เชื่อม Google Apps Script กับ Web App\n✅ Deploy ผ่าน LIFF ID\n✅ เชื่อมหน้าเว็บผ่าน Rich Menu / Flex\n✅ ทดสอบใช้งานจริง"
-                                    }
-                                ]
-                            },
-                            footer: {
-                                type: "box",
-                                layout: "vertical",
-                                spacing: "sm",
-                                contents: [
-                                    {
-                                        type: "box",
-                                        layout: "horizontal",
-                                        contents: [
-                                            {
-                                                type: "button",
-                                                style: "primary",
-                                                flex: 5,
-                                                action: {
-                                                    type: "message",
-                                                    label: "📚ลงคอร์สนี้",
-                                                    text: "ระบบออมทองผ่านminiappและLIFF"
-                                                }
-                                            },
-                                            {
-                                                type: "button",
-                                                style: "secondary",
-                                                color: "#8C9EFF",
-                                                flex: 5,
-                                                action: {
-                                                    type: "message",
-                                                    label: "🏆 Demo",
-                                                    text: "hello"
-                                                },
-                                                offsetStart: "2px",
-                                                offsetEnd: "2px"
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        type: "button",
-                                        style: "primary",
-                                        margin: "md",
-                                        action: {
-                                            type: "uri",
-                                            label: "🎥 ดูคลิป Demo",
-                                            uri: "https://youtube.com/shorts/9nW2i3UCLbg?si=BrD-6wd2Gr_dv2Je"
-                                        },
-                                        color: "#fa1805"
-                                    }
-                                ]
-                            }
-                        }
-                    ]
+                        ]
+                    }
                 }
             };
         }
 
-        // Share message by selecting friends
+        // แชร์ข้อความโดยให้เลือกเพื่อน
         async function shareMessage() {
             console.log('🎯 Share button clicked');
-
+            
             if (!liff.isLoggedIn()) {
                 showStatus('🔑 กรุณาเข้าสู่ระบบ LINE ก่อน', 'error');
                 liff.login();
                 return;
             }
 
-            // Check if running in LINE app
+            // ตรวจสอบว่าใช้งานใน LINE app หรือไม่
             if (!liff.isInClient()) {
                 showStatus('⚠️ กรุณาเปิดใน LINE App เพื่อใช้งาน ShareTargetPicker', 'error');
                 return;
             }
 
-            // Check if shareTargetPicker is available
+            // ตรวจสอบว่า shareTargetPicker พร้อมใช้งานหรือไม่
             if (!liff.isApiAvailable('shareTargetPicker')) {
                 showStatus('❌ ShareTargetPicker ไม่พร้อมใช้งาน', 'error');
                 console.error('shareTargetPicker is not available. Available APIs:', {
@@ -498,37 +343,38 @@
 
             try {
                 showStatus('⏳ กำลังเปิดหน้าต่างเลือกเพื่อน...', 'success');
-
-                // Disable button temporarily
+                
+                // ปิดการใช้งานปุ่มชั่วคราว
                 document.getElementById('shareBtn').disabled = true;
-
+                
                 const flexMessage = createFlexMessage();
                 console.log('📤 Calling shareTargetPicker with message:', flexMessage);
-
-                // Open ShareTargetPicker
+                
+                // เปิด ShareTargetPicker
                 const result = await liff.shareTargetPicker([flexMessage]);
-
+                
                 console.log('✅ ShareTargetPicker result:', result);
-
-                if (result) {
+                
+                                if (result) {
                     showStatus('🎉 แชร์ข้อความสำเร็จ!', 'success');
-
-                    // Close LIFF after sharing (if desired)
+                    
+                    // ปิด LIFF หลังแชร์เสร็จ (ถ้าต้องการ)
                     setTimeout(() => {
                         showStatus('✅ แชร์เสร็จแล้ว กำลังปิดหน้าต่าง...', 'success');
                         setTimeout(() => {
                             liff.closeWindow();
                         }, 2000);
                     }, 1000);
+                    
                 } else {
                     showStatus('❌ ยกเลิกการแชร์', 'error');
                 }
-
+                
             } catch (error) {
                 console.error('❌ Share error details:', error);
-
+                
                 let errorMessage = 'เกิดข้อผิดพลาดในการแชร์';
-
+                
                 if (error.code) {
                     switch (error.code) {
                         case 'FORBIDDEN':
@@ -546,16 +392,16 @@
                 } else {
                     errorMessage = '❌ ' + (error.message || error.toString());
                 }
-
+                
                 showStatus(errorMessage, 'error');
-
+                
             } finally {
-                // Re-enable button
+                // เปิดการใช้งานปุ่มอีกครั้ง
                 document.getElementById('shareBtn').disabled = false;
             }
         }
 
-        // Share in the current group (if any)
+        // แชร์ในกลุ่มปัจจุบัน (ถ้ามี)
         async function shareToGroup() {
             if (!liff.isLoggedIn()) {
                 showStatus('กรุณาเข้าสู่ระบบ LINE ก่อน', 'error');
@@ -564,32 +410,32 @@
 
             try {
                 const context = liff.getContext();
-
-                // Check if in a group
+                
+                // ตรวจสอบว่าอยู่ในกลุ่มหรือไม่
                 if (context.type !== 'group' && context.type !== 'room') {
                     showStatus('ฟีเจอร์นี้ใช้ได้เฉพาะในกลุ่มเท่านั้น', 'error');
                     return;
                 }
 
                 const flexMessage = createFlexMessage();
-
-                // Send message in the current group
+                
+                // ส่งข้อความในกลุ่มปัจจุบัน
                 await liff.sendMessages([flexMessage]);
                 showStatus('ส่งข้อความในกลุ่มสำเร็จ! 🎉', 'success');
-
+                
             } catch (error) {
                 console.error('Send message error:', error);
                 showStatus('เกิดข้อผิดพลาดในการส่งข้อความ: ' + error.message, 'error');
             }
         }
 
-        // Show status
+        // แสดงสถานะ
         function showStatus(message, type) {
             const statusDiv = document.getElementById('status');
             statusDiv.textContent = message;
             statusDiv.className = 'status ' + type;
-
-            // Hide message after 3 seconds
+            
+            // ซ่อนข้อความหลังจาก 3 วินาที
             setTimeout(() => {
                 statusDiv.textContent = '';
                 statusDiv.className = 'status';
