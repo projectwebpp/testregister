@@ -68,34 +68,30 @@
 <body>
     <div class="container">
         <h1>📤 LINE Share Demo</h1>
-        
+
         <div class="message-preview">
             <h3>ตัวอย่าง Flex Message ที่จะแชร์:</h3>
             <p><strong>หัวข้อ:</strong> สวัสดีจาก LIFF App!</p>
             <p><strong>เนื้อหา:</strong> นี่คือข้อความตัวอย่างจาก ShareTargetPicker</p>
         </div>
-
         <button id="shareBtn" class="share-btn" onclick="shareMessage()">
             🎯 เลือกเพื่อนแล้วแชร์
         </button>
-
         <button id="shareGroupBtn" class="share-btn" onclick="shareToGroup()">
             👥 แชร์ในกลุ่ม
         </button>
-
         <div id="status"></div>
     </div>
-
     <script>
         // Initialize LIFF
         window.onload = function() {
             liff.init({
-                liffId: '1661515542-YKEGoQXj'
+                liffId: '1661515542-YKEGoQXj' // Replace with your LIFF ID
             }).then(() => {
                 console.log('LIFF initialized successfully');
                 console.log('LIFF isLoggedIn:', liff.isLoggedIn());
                 console.log('LIFF Context:', liff.getContext());
-                
+
                 if (!liff.isLoggedIn()) {
                     liff.login();
                 } else {
@@ -116,7 +112,7 @@
                     type: 'bubble',
                     hero: {
                         type: 'image',
-                        url: 'https://via.placeholder.com/320x213/00B900/FFFFFF?text=LIFF+App',
+                        url: 'https://miro.medium.com/v2/resize:fit:4800/format:webp/1*sE8GWedeZd6qpVG9HYu-lg.jpeg',
                         size: 'full',
                         aspectRatio: '20:13',
                         aspectMode: 'cover'
@@ -176,7 +172,7 @@
                                 action: {
                                     type: 'uri',
                                     label: '🔗 เปิด LIFF App',
-                                    uri: 'https://line.me/R/app/1661515542-YKEGoQXj'
+                                    uri: 'https://line.me/R/app/1661515542-YKEGoQXj' // Replace with your LIFF ID
                                 }
                             }
                         ]
@@ -188,7 +184,7 @@
         // แชร์ข้อความโดยให้เลือกเพื่อน
         async function shareMessage() {
             console.log('Share button clicked');
-            
+
             if (!liff.isLoggedIn()) {
                 showStatus('กรุณาเข้าสู่ระบบ LINE ก่อน', 'error');
                 liff.login();
@@ -205,24 +201,24 @@
             try {
                 showStatus('กำลังเปิดหน้าต่างเลือกเพื่อน...', 'success');
                 const flexMessage = createFlexMessage();
-                
+
                 console.log('Calling shareTargetPicker with message:', flexMessage);
-                
+
                 // เปิด ShareTargetPicker
                 const result = await liff.shareTargetPicker([flexMessage]);
-                
+
                 console.log('ShareTargetPicker result:', result);
-                
+
                 if (result) {
                     showStatus('แชร์ข้อความสำเร็จ! 🎉', 'success');
                     console.log('Share success:', result);
                 } else {
                     showStatus('ยกเลิกการแชร์', 'error');
                 }
-                
+
             } catch (error) {
                 console.error('Share error details:', error);
-                
+
                 if (error.code === 'FORBIDDEN') {
                     showStatus('ไม่มีสิทธิ์ในการแชร์ กรุณาตรวจสอบการตั้งค่า LIFF', 'error');
                 } else if (error.code === 'INTERNAL_ERROR') {
@@ -242,7 +238,7 @@
 
             try {
                 const context = liff.getContext();
-                
+
                 // ตรวจสอบว่าอยู่ในกลุ่มหรือไม่
                 if (context.type !== 'group' && context.type !== 'room') {
                     showStatus('ฟีเจอร์นี้ใช้ได้เฉพาะในกลุ่มเท่านั้น', 'error');
@@ -250,11 +246,11 @@
                 }
 
                 const flexMessage = createFlexMessage();
-                
+
                 // ส่งข้อความในกลุ่มปัจจุบัน
                 await liff.sendMessages([flexMessage]);
                 showStatus('ส่งข้อความในกลุ่มสำเร็จ! 🎉', 'success');
-                
+
             } catch (error) {
                 console.error('Send message error:', error);
                 showStatus('เกิดข้อผิดพลาดในการส่งข้อความ: ' + error.message, 'error');
@@ -266,7 +262,7 @@
             const statusDiv = document.getElementById('status');
             statusDiv.textContent = message;
             statusDiv.className = 'status ' + type;
-            
+
             // ซ่อนข้อความหลังจาก 3 วินาที
             setTimeout(() => {
                 statusDiv.textContent = '';
