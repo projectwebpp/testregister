@@ -65,7 +65,7 @@
             <div class="card-glass rounded-xl p-6 text-white">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-sm opacity-75">โควตาคremaining</p>
+                        <p class="text-sm opacity-75">โควตาคงเหลือ</p>
                         <p id="remainingQuota" class="text-2xl font-bold">1000</p>
                     </div>
                     <i class="bi bi-speedometer2 text-3xl opacity-75"></i>
@@ -195,6 +195,7 @@
         let messageHistory = [];
         let quotaUsed = 0;
         let quotaTotal = 1000;
+        const scriptUrl = 'https://script.google.com/macros/s/AKfycbx_UW1ZAQxLoJ-sWIVr-_mlyMBLKFrdJu0NoRGrJz07LP42rLAMuP6qYgZDNxVszX7X/exec';
 
         // Initialize LIFF
         async function initializeLIFF() {
@@ -229,7 +230,7 @@
         // Load users from Google Sheets
         async function loadUsers() {
             try {
-                const response = await fetch('https://script.google.com/macros/s/AKfycbx_UW1ZAQxLoJ-sWIVr-_mlyMBLKFrdJu0NoRGrJz07LP42rLAMuP6qYgZDNxVszX7X/exec?action=getUsers');
+                const response = await fetch(`${scriptUrl}?action=getUsers`);
                 const data = await response.json();
                 users = data.users || [];
                 updateUserList();
@@ -243,7 +244,7 @@
         // Load message history
         async function loadMessageHistory() {
             try {
-                const response = await fetch('https://script.google.com/macros/s/AKfycbx_UW1ZAQxLoJ-sWIVr-_mlyMBLKFrdJu0NoRGrJz07LP42rLAMuP6qYgZDNxVszX7X/exec?action=getMessageHistory');
+                const response = await fetch(`${scriptUrl}?action=getMessageHistory`);
                 const data = await response.json();
                 messageHistory = data.history || [];
                 updateMessageHistory();
@@ -274,7 +275,7 @@
             });
         }
 
-        // Update user dropdown
+        // Update user dropdown with profile pictures
         function updateUserDropdown() {
             const dropdown = document.getElementById('specificUser');
             dropdown.innerHTML = '<option value="">เลือกผู้ใช้...</option>';
@@ -283,7 +284,22 @@
                 const option = document.createElement('option');
                 option.value = user.userId;
                 option.innerHTML = `${user.displayName}`;
-                option.setAttribute('data-picture', user.pictureUrl || '');
+                
+                // Create a div with profile image and name for the dropdown
+                const optionDiv = document.createElement('div');
+                optionDiv.className = 'profile-option';
+                optionDiv.innerHTML = `
+                    <img src="${user.pictureUrl || 'https://via.placeholder.com/30'}" 
+                         alt="${user.displayName}" 
+                         class="profile-img">
+                    <span>${user.displayName}</span>
+                `;
+                
+                // For browsers that support setting HTML as option content
+                if ('innerHTML' in option) {
+                    option.innerHTML = optionDiv.outerHTML;
+                }
+                
                 dropdown.appendChild(option);
             });
         }
@@ -316,6 +332,12 @@
             document.getElementById('quotaUsed').textContent = quotaUsed;
             document.getElementById('quotaTotal').textContent = quotaTotal;
             document.getElementById('remainingQuota').textContent = quotaTotal - quotaUsed;
+            
+            // Calculate success rate
+            const successCount = messageHistory.filter(msg => msg.status.includes('Delivered')).length;
+            const totalCount = messageHistory.length;
+            const successRate = totalCount > 0 ? Math.round((successCount / totalCount) * 100) : 100;
+            document.getElementById('successRate').textContent = `${successRate}%`;
         }
 
         // Get today's message count
@@ -324,11 +346,6 @@
             return messageHistory.filter(msg => 
                 new Date(msg.timestamp).toDateString() === today
             ).length;
-        }
-
-        // Update member count
-        function updateMemberCount() {
-            document.getElementById('memberCount').textContent = users.length;
         }
 
         // Send message function
@@ -367,7 +384,7 @@
                     messageContent: JSON.parse(messageContent)
                 };
 
-                const response = await fetch('https://script.google.com/macros/s/AKfycbx_UW1ZAQxLoJ-sWIVr-_mlyMBLKFrdJu0NoRGrJz07LP42rLAMuP6qYgZDNxVszX7X/exec', {
+                const response = await fetch(scriptUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
@@ -376,22 +393,19 @@
                 const result = await response.json();
 
                 if (result.success) {
-                    Swal.fire('สำเร็จ', 'ส่งข้อความเรียบร้อยแล้ว', 'success');
+                    Swal.fire({
+                        title: 'สำเร็จ',
+                        html: `ส่งข้อความเรียบร้อยแล้ว<br><small>ส่งไปแล้ว ${result.messagesSent} ข้อความ</small>`,
+                        icon: 'success'
+                    });
                     
                     // Update quota
-                    quotaUsed += result.messagesSent || 1;
+                    quotaUsed = result.quotaUsed;
+                    quotaTotal = result.quotaTotal;
                     updateStatistics();
                     
-                    // Add to history
-                    const historyItem = {
-                        type: messageType,
-                        recipient: recipientType,
-                        recipientName: recipientType === 'all' ? 'ทุกคน' : users.find(u => u.userId === specificUser)?.displayName || 'ไม่ทราบชื่อ',
-                        timestamp: new Date().toISOString(),
-                        status: 'ส่งสำเร็จ'
-                    };
-                    messageHistory.push(historyItem);
-                    updateMessageHistory();
+                    // Reload history
+                    await loadMessageHistory();
                     
                     // Clear form
                     document.getElementById('messageContent').value = '';
@@ -410,17 +424,18 @@
         async function setupSheets() {
             const result = await Swal.fire({
                 title: 'ตั้งค่า Google Sheets',
-                text: 'คุณต้องการสร้างโครงสร้างข้อมูลใน Google Sheets หรือไม่?',
+                html: 'คุณต้องการสร้างโครงสร้างข้อมูลใน Google Sheets หรือไม่?<br><small>การดำเนินการนี้จะสร้างชีตใหม่ 3 แผ่น</small>',
                 icon: 'question',
                 showCancelButton: true,
                 confirmButtonText: 'ตั้งค่า',
-                cancelButtonText: 'ยกเลิก'
+                cancelButtonText: 'ยกเลิก',
+                confirmButtonColor: '#10B981'
             });
 
             if (result.isConfirmed) {
                 showLoading();
                 try {
-                    const response = await fetch('https://script.google.com/macros/s/AKfycbx_UW1ZAQxLoJ-sWIVr-_mlyMBLKFrdJu0NoRGrJz07LP42rLAMuP6qYgZDNxVszX7X/exec?action=setupSheets');
+                    const response = await fetch(`${scriptUrl}?action=setupSheets`);
                     const data = await response.json();
                     
                     if (data.success) {
@@ -455,37 +470,36 @@
         async function clearData() {
             const result = await Swal.fire({
                 title: 'ยืนยันการลบข้อมูล',
-                text: 'คุณแน่ใจหรือไม่ที่จะลบข้อมูลทั้งหมด?',
+                html: 'คุณแน่ใจหรือไม่ที่จะลบข้อมูลทั้งหมด?<br><small>ข้อมูลผู้ใช้และประวัติการส่งจะถูกลบทั้งหมด</small>',
                 icon: 'warning',
                 showCancelButton: true,
-                confirmButtonText: 'ลบ',
+                confirmButtonText: 'ลบข้อมูล',
                 cancelButtonText: 'ยกเลิก',
-                confirmButtonColor: '#ef4444'
+                confirmButtonColor: '#EF4444',
+                showLoaderOnConfirm: true,
+                preConfirm: async () => {
+                    try {
+                        const response = await fetch(`${scriptUrl}?action=clearData`);
+                        return response.json();
+                    } catch (error) {
+                        Swal.showValidationMessage('เกิดข้อผิดพลาด');
+                        return false;
+                    }
+                }
             });
 
             if (result.isConfirmed) {
-                showLoading();
-                try {
-                    const response = await fetch('https://script.google.com/macros/s/AKfycbx_UW1ZAQxLoJ-sWIVr-_mlyMBLKFrdJu0NoRGrJz07LP42rLAMuP6qYgZDNxVszX7X/exec?action=clearData');
-                    const data = await response.json();
-                    
-                    if (data.success) {
-                        users = [];
-                        messageHistory = [];
-                        quotaUsed = 0;
-                        updateUserList();
-                        updateUserDropdown();
-                        updateMessageHistory();
-                        updateStatistics();
-                        Swal.fire('สำเร็จ', 'ลบข้อมูลเรียบร้อยแล้ว', 'success');
-                    } else {
-                        Swal.fire('ข้อผิดพลาด', data.error || 'ไม่สามารถลบข้อมูลได้', 'error');
-                    }
-                } catch (error) {
-                    console.error('Error clearing data:', error);
-                    Swal.fire('ข้อผิดพลาด', 'เกิดข้อผิดพลาดในการลบข้อมูล', 'error');
-                } finally {
-                    hideLoading();
+                if (result.value.success) {
+                    users = [];
+                    messageHistory = [];
+                    quotaUsed = 0;
+                    updateUserList();
+                    updateUserDropdown();
+                    updateMessageHistory();
+                    updateStatistics();
+                    Swal.fire('สำเร็จ', 'ลบข้อมูลเรียบร้อยแล้ว', 'success');
+                } else {
+                    Swal.fire('ข้อผิดพลาด', result.value.error || 'ไม่สามารถลบข้อมูลได้', 'error');
                 }
             }
         }
