@@ -1,567 +1,148 @@
-<!DOCTYPE html>
+<!-- index.html -->
+<!doctype html>
 <html lang="th">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Line CRM System</title>
-    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-    <style>
-        .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-        .card-glass { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2); }
-        .profile-option { display: flex; align-items: center; gap: 10px; }
-        .profile-img { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; }
-        .animate-pulse-slow { animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
-        .fade-in-up { animation: fadeInUp 0.6s ease-out; }
-    </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>LINE CRM — LIFF</title>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="gradient-bg min-h-screen">
-    <!-- Navigation -->
-    <nav class="bg-white/10 backdrop-blur-md border-b border-white/20">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16">
-                <div class="flex items-center">
-                    <i class="bi bi-chat-dots text-white text-2xl mr-3"></i>
-                    <h1 class="text-white text-xl font-bold">Line CRM System</h1>
-                </div>
-                <div class="flex items-center space-x-4">
-                    <div class="text-white text-sm">
-                        <span class="opacity-75">สมาชิก:</span>
-                        <span id="memberCount" class="font-semibold">0</span>
-                    </div>
-                    <div class="text-white text-sm">
-                        <span class="opacity-75">โควตา:</span>
-                        <span id="quotaUsed" class="font-semibold">0</span>/<span id="quotaTotal" class="font-semibold">1000</span>
-                    </div>
-                </div>
-            </div>
+<body class="bg-gray-100 font-sans">
+  <div class="max-w-4xl mx-auto p-4">
+    <header class="flex items-center justify-between py-4">
+      <h1 class="text-2xl font-bold">LINE CRM — LIFF</h1>
+      <div id="user-info" class="text-sm text-gray-600"></div>
+    </header>
+
+    <section class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="md:col-span-1 bg-white p-4 rounded shadow">
+        <h2 class="font-semibold mb-2">เพิ่มลูกค้าใหม่</h2>
+        <form id="frmAdd">
+          <input class="w-full p-2 border mb-2 rounded" id="name" placeholder="ชื่อลูกค้า">
+          <input class="w-full p-2 border mb-2 rounded" id="phone" placeholder="เบอร์โทร">
+          <input class="w-full p-2 border mb-2 rounded" id="email" placeholder="อีเมล">
+          <textarea class="w-full p-2 border mb-2 rounded" id="note" placeholder="หมายเหตุ"></textarea>
+          <div class="flex gap-2">
+            <button class="px-4 py-2 bg-blue-600 text-white rounded" type="button" onclick="onAddCustomer()">เพิ่ม</button>
+            <button class="px-4 py-2 bg-gray-200 rounded" type="button" onclick="onScanUid()">เชื่อม LINE (Login)</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="md:col-span-2 bg-white p-4 rounded shadow">
+        <div class="flex items-center justify-between mb-3">
+          <input id="q" class="p-2 border rounded w-1/2" placeholder="ค้นหาชื่อ / เบอร์ / อีเมล">
+          <div>
+            <button class="px-3 py-2 bg-green-600 text-white rounded" onclick="onSearch()">ค้นหา</button>
+            <button class="px-3 py-2 bg-yellow-500 text-white rounded" onclick="loadCustomers()">รีเฟรช</button>
+            <button class="px-3 py-2 bg-red-500 text-white rounded" onclick="onBroadcast()">Broadcast</button>
+          </div>
         </div>
-    </nav>
+        <div id="list" class="space-y-2"></div>
+      </div>
+    </section>
+  </div>
 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <!-- Dashboard Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8 fade-in-up">
-            <div class="card-glass rounded-xl p-6 text-white">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-sm opacity-75">สมาชิกทั้งหมด</p>
-                        <p id="totalMembers" class="text-2xl font-bold">0</p>
-                    </div>
-                    <i class="bi bi-people text-3xl opacity-75"></i>
-                </div>
-            </div>
-            <div class="card-glass rounded-xl p-6 text-white">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-sm opacity-75">ข้อความส่งวันนี้</p>
-                        <p id="todayMessages" class="text-2xl font-bold">0</p>
-                    </div>
-                    <i class="bi bi-chat-text text-3xl opacity-75"></i>
-                </div>
-            </div>
-            <div class="card-glass rounded-xl p-6 text-white">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-sm opacity-75">โควตาคงเหลือ</p>
-                        <p id="remainingQuota" class="text-2xl font-bold">1000</p>
-                    </div>
-                    <i class="bi bi-speedometer2 text-3xl opacity-75"></i>
-                </div>
-            </div>
-            <div class="card-glass rounded-xl p-6 text-white">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-sm opacity-75">สำเร็จ</p>
-                        <p id="successRate" class="text-2xl font-bold">100%</p>
-                    </div>
-                    <i class="bi bi-check-circle text-3xl opacity-75"></i>
-                </div>
-            </div>
+  <script>
+    let liffId = '1656079273-P30ZMXMg'; // ใส่ LIFF ID ใน Script Properties หรือแก้ที่นี่
+
+    async function initLiff(){
+      try{
+        // ถ้าใส่ LIFF ID ตรงนี้ ให้ใช้งาน หรือคุณจะเรียกจาก Script Property via google.script.run
+        // liffId = 'REPLACE_WITH_YOUR_LIFF_ID';
+        if (!liffId) {
+          // try get from server property (optional)
+        }
+        await liff.init({ liffId: liffId });
+        if (liff.isLoggedIn()){
+          const profile = await liff.getProfile();
+          document.getElementById('user-info').innerText = profile.displayName;
+        } else {
+          document.getElementById('user-info').innerText = 'ไม่พบผู้ใช้ (กรุณาเชื่อม)';
+        }
+      } catch(err){ console.error(err); }
+    }
+
+    // โหลดรายการลูกค้า
+    function loadCustomers(){
+      document.getElementById('list').innerHTML = 'Loading...';
+      google.script.run.withSuccessHandler(renderList).server_getCustomers();
+    }
+
+    function renderList(items){
+      const el = document.getElementById('list'); el.innerHTML = '';
+      if (!items || items.length===0) return el.innerHTML = '<div class="text-gray-500">ไม่มีข้อมูล</div>';
+      items.forEach(it => {
+        const d = document.createElement('div');
+        d.className = 'p-3 border rounded flex justify-between items-center';
+        d.innerHTML = `<div>
+          <div class="font-semibold">${escapeHtml(it.name||'—')}</div>
+          <div class="text-sm text-gray-600">${escapeHtml(it.phone||'—')} • ${escapeHtml(it.email||'—')}</div>
         </div>
+        <div class="flex gap-2 items-center">
+          <button class="px-2 py-1 bg-blue-500 text-white rounded" onclick='onOpenDetail(${JSON.stringify(it)})'>ดู</button>
+          <button class="px-2 py-1 bg-indigo-600 text-white rounded" onclick='onSendMsg(${JSON.stringify(it)})'>ส่งข้อความ</button>
+        </div>`;
+        el.appendChild(d);
+      });
+    }
 
-        <!-- Main Content -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <!-- Send Message Panel -->
-            <div class="lg:col-span-2">
-                <div class="card-glass rounded-xl p-6 fade-in-up">
-                    <h2 class="text-xl font-bold text-white mb-6 flex items-center">
-                        <i class="bi bi-send mr-2"></i>
-                        ส่งข้อความโฆษณา
-                    </h2>
-                    
-                    <div class="space-y-4">
-                        <!-- Message Type Selection -->
-                        <div>
-                            <label class="block text-white text-sm font-medium mb-2">ประเภทข้อความ</label>
-                            <select id="messageType" class="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                                <option value="text">Text Message</option>
-                                <option value="flex">Flex Message</option>
-                                <option value="image">Image Message</option>
-                                <option value="video">Video Message</option>
-                            </select>
-                        </div>
+    function onOpenDetail(obj){
+      alert('รายละเอียด:\nName: '+obj.name+'\nPhone: '+obj.phone+'\nEmail: '+obj.email+'\nNote: '+obj.note+'\nUID: '+obj.uid);
+    }
 
-                        <!-- Recipient Selection -->
-                        <div>
-                            <label class="block text-white text-sm font-medium mb-2">ผู้รับ</label>
-                            <div class="flex space-x-2">
-                                <select id="recipientType" class="flex-1 px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                                    <option value="all">ส่งให้ทุกคน</option>
-                                    <option value="specific">เลือกเฉพาะ</option>
-                                </select>
-                                <select id="specificUser" class="flex-1 px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent hidden">
-                                    <option value="">เลือกผู้ใช้...</option>
-                                </select>
-                            </div>
-                        </div>
+    function onSendMsg(obj){
+      const text = prompt('พิมพ์ข้อความที่จะส่งให้ '+(obj.name||obj.phone));
+      if (!text) return;
+      google.script.run.withSuccessHandler(res=>{ alert('ส่งแล้ว'); }).server_sendPush(obj.uid, text);
+    }
 
-                        <!-- Message Content -->
-                        <div>
-                            <label class="block text-white text-sm font-medium mb-2">เนื้อหาข้อความ (JSON Format)</label>
-                            <textarea id="messageContent" rows="8" class="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder='{"type": "text", "text": "สวัสดีครับ"}'></textarea>
-                        </div>
+    function onAddCustomer(){
+      const customer = {
+        name: document.getElementById('name').value,
+        phone: document.getElementById('phone').value,
+        email: document.getElementById('email').value,
+        note: document.getElementById('note').value,
+        uid: ''
+      };
+      google.script.run.withSuccessHandler(res=>{ alert('เพิ่มแล้ว'); loadCustomers(); document.getElementById('frmAdd').reset(); }).server_addCustomer(customer);
+    }
 
-                        <!-- Send Button -->
-                        <button id="sendMessageBtn" class="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-300 transform hover:scale-105 shadow-lg">
-                            <i class="bi bi-send mr-2"></i>ส่งข้อความ
-                        </button>
-                    </div>
-                </div>
-            </div>
+    function onSearch(){
+      const q = document.getElementById('q').value;
+      google.script.run.withSuccessHandler(renderList).server_searchCustomers(q);
+    }
 
-            <!-- Statistics Panel -->
-            <div class="space-y-6">
-                <!-- User List -->
-                <div class="card-glass rounded-xl p-6 fade-in-up">
-                    <h3 class="text-lg font-bold text-white mb-4 flex items-center">
-                        <i class="bi bi-people mr-2"></i>
-                        รายชื่อสมาชิก
-                    </h3>
-                    <div id="userList" class="space-y-2 max-h-64 overflow-y-auto">
-                        <!-- User items will be populated here -->
-                    </div>
-                </div>
+    function onBroadcast(){
+      const txt = prompt('ข้อความ Broadcast (ส่งถึงทุกคนที่ Follow)');
+      if (!txt) return;
+      google.script.run.withSuccessHandler(r=>{ alert('broadcast result:'+JSON.stringify(r)); }).server_broadcast(txt);
+    }
 
-                <!-- Message History -->
-                <div class="card-glass rounded-xl p-6 fade-in-up">
-                    <h3 class="text-lg font-bold text-white mb-4 flex items-center">
-                        <i class="bi bi-clock-history mr-2"></i>
-                        ประวัติการส่ง
-                    </h3>
-                    <div id="messageHistory" class="space-y-2 max-h-64 overflow-y-auto">
-                        <!-- Message history will be populated here -->
-                    </div>
-                </div>
-            </div>
-        </div>
+    function onScanUid(){
+      // ตัวอย่างการดึง profile แล้วบันทึก UID ลง Google Sheet
+      if (!liff.isLoggedIn()){
+        liff.login();
+        return;
+      }
+      liff.getProfile().then(profile => {
+        const uid = profile.userId;
+        const name = profile.displayName;
+        // ให้ผู้ใช้กรอกเบอร์ก่อน แล้วบันทึก uid ไปหาเรคคอร์ด
+        const phone = document.getElementById('phone').value;
+        if (!phone) return alert('กรุณากรอกเบอร์ลูกค้าก่อนเพื่อเชื่อม UID');
+        google.script.run.withSuccessHandler(r=>{ alert('เชื่อมสำเร็จ'); }).server_saveCustomerUid(phone, uid);
+      }).catch(err => console.error(err));
+    }
 
-        <!-- Setup Panel -->
-        <div class="mt-8">
-            <div class="card-glass rounded-xl p-6 fade-in-up">
-                <h2 class="text-xl font-bold text-white mb-6 flex items-center">
-                    <i class="bi bi-gear mr-2"></i>
-                    การตั้งค่าระบบ
-                </h2>
-                
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <button id="setupSheetsBtn" class="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg transition duration-300">
-                        <i class="bi bi-table mr-2"></i>ตั้งค่า Google Sheets
-                    </button>
-                    <button id="syncUsersBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg transition duration-300">
-                        <i class="bi bi-arrow-clockwise mr-2"></i>ซิงค์ข้อมูลผู้ใช้
-                    </button>
-                    <button id="clearDataBtn" class="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-lg transition duration-300">
-                        <i class="bi bi-trash mr-2"></i>ล้างข้อมูล
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
+    function escapeHtml(s){ return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-    <!-- Loading Overlay -->
-    <div id="loadingOverlay" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 hidden">
-        <div class="bg-white rounded-xl p-8 text-center">
-            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-            <p class="text-gray-700">กำลังประมวลผล...</p>
-        </div>
-    </div>
-
-    <script>
-        // Global variables
-        let users = [];
-        let messageHistory = [];
-        let quotaUsed = 0;
-        let quotaTotal = 1000;
-        const scriptUrl = 'https://script.google.com/macros/s/AKfycbx_UW1ZAQxLoJ-sWIVr-_mlyMBLKFrdJu0NoRGrJz07LP42rLAMuP6qYgZDNxVszX7X/exec';
-
-        // Initialize LIFF
-        async function initializeLIFF() {
-            try {
-                await liff.init({ liffId: '1656079273-P30ZMXMg' });
-                if (!liff.isLoggedIn()) {
-                    liff.login();
-                }
-                console.log('LIFF initialized successfully');
-            } catch (error) {
-                console.error('LIFF initialization failed:', error);
-            }
-        }
-
-        // Load initial data
-        async function loadInitialData() {
-            showLoading();
-            try {
-                await Promise.all([
-                    loadUsers(),
-                    loadMessageHistory(),
-                    updateStatistics()
-                ]);
-            } catch (error) {
-                console.error('Error loading initial data:', error);
-                Swal.fire('ข้อผิดพลาด', 'ไม่สามารถโหลดข้อมูลเริ่มต้นได้', 'error');
-            } finally {
-                hideLoading();
-            }
-        }
-
-        // Load users from Google Sheets
-        async function loadUsers() {
-            try {
-                const response = await fetch(`${scriptUrl}?action=getUsers`);
-                const data = await response.json();
-                users = data.users || [];
-                updateUserList();
-                updateUserDropdown();
-                updateMemberCount();
-            } catch (error) {
-                console.error('Error loading users:', error);
-            }
-        }
-
-        // Load message history
-        async function loadMessageHistory() {
-            try {
-                const response = await fetch(`${scriptUrl}?action=getMessageHistory`);
-                const data = await response.json();
-                messageHistory = data.history || [];
-                updateMessageHistory();
-            } catch (error) {
-                console.error('Error loading message history:', error);
-            }
-        }
-
-        // Update user list display
-        function updateUserList() {
-            const userListEl = document.getElementById('userList');
-            userListEl.innerHTML = '';
-
-            users.forEach(user => {
-                const userEl = document.createElement('div');
-                userEl.className = 'flex items-center space-x-3 p-2 bg-white/5 rounded-lg hover:bg-white/10 transition duration-200';
-                userEl.innerHTML = `
-                    <img src="${user.pictureUrl || 'https://via.placeholder.com/30'}" 
-                         alt="${user.displayName}" 
-                         class="profile-img border border-white/20">
-                    <div class="flex-1 min-w-0">
-                        <p class="text-white text-sm font-medium truncate">${user.displayName}</p>
-                        <p class="text-white/60 text-xs truncate">${user.userId}</p>
-                    </div>
-                    <span class="text-white/60 text-xs">${user.messageCount || 0} ข้อความ</span>
-                `;
-                userListEl.appendChild(userEl);
-            });
-        }
-
-        // Update user dropdown with profile pictures
-        function updateUserDropdown() {
-            const dropdown = document.getElementById('specificUser');
-            dropdown.innerHTML = '<option value="">เลือกผู้ใช้...</option>';
-
-            users.forEach(user => {
-                const option = document.createElement('option');
-                option.value = user.userId;
-                option.innerHTML = `${user.displayName}`;
-                
-                // Create a div with profile image and name for the dropdown
-                const optionDiv = document.createElement('div');
-                optionDiv.className = 'profile-option';
-                optionDiv.innerHTML = `
-                    <img src="${user.pictureUrl || 'https://via.placeholder.com/30'}" 
-                         alt="${user.displayName}" 
-                         class="profile-img">
-                    <span>${user.displayName}</span>
-                `;
-                
-                // For browsers that support setting HTML as option content
-                if ('innerHTML' in option) {
-                    option.innerHTML = optionDiv.outerHTML;
-                }
-                
-                dropdown.appendChild(option);
-            });
-        }
-
-        // Update message history display
-        function updateMessageHistory() {
-            const historyEl = document.getElementById('messageHistory');
-            historyEl.innerHTML = '';
-
-            messageHistory.slice(-10).reverse().forEach(msg => {
-                const msgEl = document.createElement('div');
-                msgEl.className = 'p-3 bg-white/5 rounded-lg';
-                msgEl.innerHTML = `
-                    <div class="flex justify-between items-start mb-1">
-                        <span class="text-white text-sm font-medium">${msg.type}</span>
-                        <span class="text-white/60 text-xs">${new Date(msg.timestamp).toLocaleString('th-TH')}</span>
-                    </div>
-                    <p class="text-white/80 text-xs">${msg.recipient === 'all' ? 'ส่งให้ทุกคน' : `ส่งให้ ${msg.recipientName}`}</p>
-                    <p class="text-white/60 text-xs mt-1">${msg.status}</p>
-                `;
-                historyEl.appendChild(msgEl);
-            });
-        }
-
-        // Update statistics
-        function updateStatistics() {
-            document.getElementById('totalMembers').textContent = users.length;
-            document.getElementById('memberCount').textContent = users.length;
-            document.getElementById('todayMessages').textContent = getTodayMessageCount();
-            document.getElementById('quotaUsed').textContent = quotaUsed;
-            document.getElementById('quotaTotal').textContent = quotaTotal;
-            document.getElementById('remainingQuota').textContent = quotaTotal - quotaUsed;
-            
-            // Calculate success rate
-            const successCount = messageHistory.filter(msg => msg.status.includes('Delivered')).length;
-            const totalCount = messageHistory.length;
-            const successRate = totalCount > 0 ? Math.round((successCount / totalCount) * 100) : 100;
-            document.getElementById('successRate').textContent = `${successRate}%`;
-        }
-
-        // Get today's message count
-        function getTodayMessageCount() {
-            const today = new Date().toDateString();
-            return messageHistory.filter(msg => 
-                new Date(msg.timestamp).toDateString() === today
-            ).length;
-        }
-
-        // Send message function
-        async function sendMessage() {
-            const messageType = document.getElementById('messageType').value;
-            const recipientType = document.getElementById('recipientType').value;
-            const specificUser = document.getElementById('specificUser').value;
-            const messageContent = document.getElementById('messageContent').value;
-
-            // Validation
-            if (!messageContent.trim()) {
-                Swal.fire('ข้อผิดพลาด', 'กรุณาใส่เนื้อหาข้อความ', 'error');
-                return;
-            }
-
-            if (recipientType === 'specific' && !specificUser) {
-                Swal.fire('ข้อผิดพลาด', 'กรุณาเลือกผู้รับ', 'error');
-                return;
-            }
-
-            try {
-                JSON.parse(messageContent);
-            } catch (error) {
-                Swal.fire('ข้อผิดพลาด', 'รูปแบบ JSON ไม่ถูกต้อง', 'error');
-                return;
-            }
-
-            showLoading();
-
-            try {
-                const payload = {
-                    action: 'sendMessage',
-                    messageType,
-                    recipientType,
-                    specificUser,
-                    messageContent: JSON.parse(messageContent)
-                };
-
-                const response = await fetch(scriptUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-                const result = await response.json();
-
-                if (result.success) {
-                    Swal.fire({
-                        title: 'สำเร็จ',
-                        html: `ส่งข้อความเรียบร้อยแล้ว<br><small>ส่งไปแล้ว ${result.messagesSent} ข้อความ</small>`,
-                        icon: 'success'
-                    });
-                    
-                    // Update quota
-                    quotaUsed = result.quotaUsed;
-                    quotaTotal = result.quotaTotal;
-                    updateStatistics();
-                    
-                    // Reload history
-                    await loadMessageHistory();
-                    
-                    // Clear form
-                    document.getElementById('messageContent').value = '';
-                } else {
-                    Swal.fire('ข้อผิดพลาด', result.error || 'ไม่สามารถส่งข้อความได้', 'error');
-                }
-            } catch (error) {
-                console.error('Error sending message:', error);
-                Swal.fire('ข้อผิดพลาด', 'เกิดข้อผิดพลาดในการส่งข้อความ', 'error');
-            } finally {
-                hideLoading();
-            }
-        }
-
-        // Setup Google Sheets
-        async function setupSheets() {
-            const result = await Swal.fire({
-                title: 'ตั้งค่า Google Sheets',
-                html: 'คุณต้องการสร้างโครงสร้างข้อมูลใน Google Sheets หรือไม่?<br><small>การดำเนินการนี้จะสร้างชีตใหม่ 3 แผ่น</small>',
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonText: 'ตั้งค่า',
-                cancelButtonText: 'ยกเลิก',
-                confirmButtonColor: '#10B981'
-            });
-
-            if (result.isConfirmed) {
-                showLoading();
-                try {
-                    const response = await fetch(`${scriptUrl}?action=setupSheets`);
-                    const data = await response.json();
-                    
-                    if (data.success) {
-                        Swal.fire('สำเร็จ', 'ตั้งค่า Google Sheets เรียบร้อยแล้ว', 'success');
-                    } else {
-                        Swal.fire('ข้อผิดพลาด', data.error || 'ไม่สามารถตั้งค่าได้', 'error');
-                    }
-                } catch (error) {
-                    console.error('Error setting up sheets:', error);
-                    Swal.fire('ข้อผิดพลาด', 'เกิดข้อผิดพลาดในการตั้งค่า', 'error');
-                } finally {
-                    hideLoading();
-                }
-            }
-        }
-
-        // Sync users
-        async function syncUsers() {
-            showLoading();
-            try {
-                await loadUsers();
-                Swal.fire('สำเร็จ', 'ซิงค์ข้อมูลเรียบร้อยแล้ว', 'success');
-            } catch (error) {
-                console.error('Error syncing users:', error);
-                Swal.fire('ข้อผิดพลาด', 'ไม่สามารถซิงค์ข้อมูลได้', 'error');
-            } finally {
-                hideLoading();
-            }
-        }
-
-        // Clear data
-        async function clearData() {
-            const result = await Swal.fire({
-                title: 'ยืนยันการลบข้อมูล',
-                html: 'คุณแน่ใจหรือไม่ที่จะลบข้อมูลทั้งหมด?<br><small>ข้อมูลผู้ใช้และประวัติการส่งจะถูกลบทั้งหมด</small>',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: 'ลบข้อมูล',
-                cancelButtonText: 'ยกเลิก',
-                confirmButtonColor: '#EF4444',
-                showLoaderOnConfirm: true,
-                preConfirm: async () => {
-                    try {
-                        const response = await fetch(`${scriptUrl}?action=clearData`);
-                        return response.json();
-                    } catch (error) {
-                        Swal.showValidationMessage('เกิดข้อผิดพลาด');
-                        return false;
-                    }
-                }
-            });
-
-            if (result.isConfirmed) {
-                if (result.value.success) {
-                    users = [];
-                    messageHistory = [];
-                    quotaUsed = 0;
-                    updateUserList();
-                    updateUserDropdown();
-                    updateMessageHistory();
-                    updateStatistics();
-                    Swal.fire('สำเร็จ', 'ลบข้อมูลเรียบร้อยแล้ว', 'success');
-                } else {
-                    Swal.fire('ข้อผิดพลาด', result.value.error || 'ไม่สามารถลบข้อมูลได้', 'error');
-                }
-            }
-        }
-
-        // Show/Hide loading
-        function showLoading() {
-            document.getElementById('loadingOverlay').classList.remove('hidden');
-        }
-
-        function hideLoading() {
-            document.getElementById('loadingOverlay').classList.add('hidden');
-        }
-
-        // Event listeners
-        document.addEventListener('DOMContentLoaded', function() {
-            // Initialize LIFF and load data
-            initializeLIFF().then(loadInitialData);
-
-            // Recipient type change
-            document.getElementById('recipientType').addEventListener('change', function() {
-                const specificUserSelect = document.getElementById('specificUser');
-                if (this.value === 'specific') {
-                    specificUserSelect.classList.remove('hidden');
-                } else {
-                    specificUserSelect.classList.add('hidden');
-                }
-            });
-
-            // Message type change - populate example JSON
-            document.getElementById('messageType').addEventListener('change', function() {
-                const messageContent = document.getElementById('messageContent');
-                let example = '';
-                
-                switch(this.value) {
-                    case 'text':
-                        example = '{\n  "type": "text",\n  "text": "สวัสดีครับ นี่คือข้อความทดสอบ"\n}';
-                        break;
-                    case 'flex':
-                        example = '{\n  "type": "flex",\n  "altText": "Flex Message",\n  "contents": {\n    "type": "bubble",\n    "body": {\n      "type": "box",\n      "layout": "vertical",\n      "contents": [\n        {\n          "type": "text",\n          "text": "สวัสดีครับ",\n          "weight": "bold",\n          "size": "xl"\n        }\n      ]\n    }\n  }\n}';
-                        break;
-                    case 'image':
-                        example = '{\n  "type": "image",\n  "originalContentUrl": "https://example.com/image.jpg",\n  "previewImageUrl": "https://example.com/preview.jpg"\n}';
-                        break;
-                    case 'video':
-                        example = '{\n  "type": "video",\n  "originalContentUrl": "https://example.com/video.mp4",\n  "previewImageUrl": "https://example.com/preview.jpg"\n}';
-                        break;
-                }
-                messageContent.value = example;
-            });
-
-            // Button event listeners
-            document.getElementById('sendMessageBtn').addEventListener('click', sendMessage);
-            document.getElementById('setupSheetsBtn').addEventListener('click', setupSheets);
-            document.getElementById('syncUsersBtn').addEventListener('click', syncUsers);
-            document.getElementById('clearDataBtn').addEventListener('click', clearData);
-
-            // Set initial example
-            document.getElementById('messageType').dispatchEvent(new Event('change'));
-        });
-
-        // Auto-refresh data every 30 seconds
-        setInterval(loadInitialData, 30000);
-    </script>
+    window.onload = function(){
+      // ถ้าคุณต้องการใส่ LIFF ID โดยตรง ให้แก้โค้ดด้านบน
+      initLiff();
+      loadCustomers();
+    }
+  </script>
 </body>
 </html>
