@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LINE ImageMap Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(45deg, #00c851, #00b74a);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            padding: 40px;
+        }
+
+        .step-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .step-card {
+            flex: 1;
+            min-width: 300px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+
+        .step-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        .step-number {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(45deg, #00c851, #00b74a);
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 40px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .step-title {
+            font-size: 1.3em;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #2c3e50;
+        }
+
+        .file-upload-area {
+            border: 3px dashed #00c851;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            background: #f8fff9;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+
+        .file-upload-area:hover {
+            background: #e8f5e8;
+            border-color: #00b74a;
+        }
+
+        .file-upload-area.dragover {
+            background: #d4edda;
+            border-color: #28a745;
+        }
+
+        .upload-icon {
+            font-size: 3em;
+            color: #00c851;
+            margin-bottom: 15px;
+        }
+
+        .canvas-container {
+            position: relative;
+            display: inline-block;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 20px 0;
+            max-width: 100%;
+        }
+
+        #imageCanvas {
+            display: block;
+            cursor: crosshair;
+            max-width: 100%;
+            height: auto;
+        }
+
+        .point-marker {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: rgba(255, 0, 0, 0.8);
+            border: 2px solid white;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -50%) scale(1.2); }
+            100% { transform: translate(-50%, -50%) scale(1); }
+        }
+
+        .control-panel {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border: 1px solid #dee2e6;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #00c851;
+            box-shadow: 0 0 0 3px rgba(0, 200, 81, 0.1);
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #00c851, #00b74a);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(45deg, #00b74a, #009688);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,200,81,0.3);
+        }
+
+        .btn-danger {
+            background: linear-gradient(45deg, #dc3545, #c82333);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: linear-gradient(45deg, #c82333, #bd2130);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(220,53,69,0.3);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(45deg, #6c757d, #5a6268);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: linear-gradient(45deg, #5a6268, #495057);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(108,117,125,0.3);
+        }
+
+        .actions-list {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            background: white;
+        }
+
+        .action-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border: 1px solid #e9ecef;
+        }
+
+        .action-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .json-output {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 25px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            margin-top: 20px;
+            border: 1px solid #4a5568;
+        }
+
+        .status-message {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-weight: 500;
+        }
+
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #00c851;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .step-container {
+                flex-direction: column;
+            }
+            
+            .step-card {
+                min-width: auto;
+            }
+            
+            .main-content {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🗺️ LINE ImageMap Generator</h1>
+            <p>สร้าง ImageMap สำหรับ LINE Bot อย่างง่ายดาย</p>
+        </div>
+
+        <div class="main-content">
+            <div class="step-container">
+                <!-- Step 1: Upload Image -->
+                <div class="step-card">
+                    <div class="step-number">1</div>
+                    <div class="step-title">อัพโหลดรูปภาพ</div>
+                    
+                    <div class="file-upload-area" id="fileUploadArea">
+                        <div class="upload-icon">📁</div>
+                        <p><strong>คลิกเพื่อเลือกไฟล์</strong> หรือลากไฟล์มาวางที่นี่</p>
+                        <p>รองรับไฟล์: JPG, PNG, GIF</p>
+                    </div>
+                    
+                    <input type="file" id="imageInput" accept="image/*" style="display: none;">
+                    
+                    <div id="uploadStatus"></div>
+                    
+                    <div class="form-group">
+                        <label>Google Apps Script URL:</label>
+                        <input type="text" id="gasUrl" class="form-control" 
+                               placeholder="https://script.google.com/macros/s/.../exec"
+                               value="">
+                    </div>
+                </div>
+
+                <!-- Step 2: Draw Points -->
+                <div class="step-card">
+                    <div class="step-number">2</div>
+                    <div class="step-title">วาดจุดบนรูปภาพ</div>
+                    
+                    <div id="imagePreview" style="text-align: center;">
+                        <p style="color: #6c757d; font-style: italic;">กรุณาอัพโหลดรูปภาพก่อน</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Control Panel -->
+            <div class="control-panel" id="controlPanel" style="display: none;">
+                <h3>🎛️ ตั้งค่า Action</h3>
+                
+                <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+                    <div class="form-group" style="flex: 1; min-width: 200px;">
+                        <label>ประเภท Action:</label>
+                        <select id="actionType" class="form-control">
+                            <option value="uri">เปิด URL</option>
+                            <option value="message">ส่งข้อความ</option>
+                            <option value="postback">Postback</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group" style="flex: 1; min-width: 200px;">
+                        <label>ข้อมูล Action:</label>
+                        <input type="text" id="actionData" class="form-control" 
+                               placeholder="URL หรือข้อความ">
+                    </div>
+                </div>
+                
+                <div style="margin-top: 20px;">
+                    <button class="btn btn-danger" id="clearLastPoint">ลบจุดล่าสุด</button>
+                    <button class="btn btn-secondary" id="clearAllPoints">ลบทุกจุด</button>
+                </div>
+            </div>
+
+            <!-- Actions List -->
+            <div id="actionsContainer" style="display: none;">
+                <h3>📋 รายการ Actions</h3>
+                <div class="actions-list" id="actionsList">
+                    <p style="color: #6c757d; text-align: center;">ยังไม่มี Actions</p>
+                </div>
+            </div>
+
+            <!-- Step 3: Generate JSON -->
+            <div style="text-align: center; margin: 40px 0;">
+                <button class="btn btn-primary" id="generateJson" style="display: none; font-size: 16px; padding: 15px 40px;">
+                    🚀 สร้าง JSON
+                </button>
+            </div>
+
+            <!-- JSON Output -->
+            <div id="jsonOutput" style="display: none;">
+                <h3>📄 JSON Output</h3>
+                <div class="json-output" id="jsonContent"></div>
+                <div style="text-align: center; margin-top: 20px;">
+                    <button class="btn btn-secondary" id="copyJson">📋 คัดลอก JSON</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class ImageMapGenerator {
+            constructor() {
+                this.canvas = null;
+                this.ctx = null;
+                this.image = null;
+                this.actions = [];
+                this.currentScale = 1;
+                this.canvasContainer = null;
+                this.baseUrl = '';
+                
+                this.initEventListeners();
+            }
+
+            initEventListeners() {
+                // File upload
+                const fileInput = document.getElementById('imageInput');
+                const uploadArea = document.getElementById('fileUploadArea');
+
+                uploadArea.addEventListener('click', () => fileInput.click());
+                fileInput.addEventListener('change', (e) => this.handleFileSelect(e));
+
+                // Drag and drop
+                uploadArea.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    uploadArea.classList.add('dragover');
+                });
+
+                uploadArea.addEventListener('dragleave', () => {
+                    uploadArea.classList.remove('dragover');
+                });
+
+                uploadArea.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    uploadArea.classList.remove('dragover');
+                    const files = e.dataTransfer.files;
+                    if (files.length > 0) {
+                        this.processFile(files[0]);
+                    }
+                });
+
+                // Control buttons
+                document.getElementById('clearLastPoint').addEventListener('click', () => this.clearLastPoint());
+                document.getElementById('clearAllPoints').addEventListener('click', () => this.clearAllPoints());
+                document.getElementById('generateJson').addEventListener('click', () => this.generateJson());
+                document.getElementById('copyJson').addEventListener('click', () => this.copyJson());
+            }
+
+            handleFileSelect(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    this.processFile(file);
+                }
+            }
+
+            async processFile(file) {
+                if (!file.type.startsWith('image/')) {
+                    this.showStatus('กรุณาเลือกไฟล์รูปภาพ', 'error');
+                    return;
+                }
+
+                try {
+                    this.showStatus('กำลังอัพโหลดไฟล์...', 'info');
+                    
+                    // Upload to Google Drive via GAS
+                    const gasUrl = document.getElementById('gasUrl').value;
+                    if (!gasUrl) {
+                        this.showStatus('https://script.google.com/macros/s/AKfycbzSSTJYhVjEVsHtWzxC02GfcGlWmF5OYUxoJ1XcxI6W8LgB82vnryeaVqbhLn8bA0B2/exec', 'error');
+                        return;
+                    }
+
+                    const formData = new FormData();
+                    formData.append('file', file);
+
+                    const response = await fetch(gasUrl, {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        this.baseUrl = result.url;
+                        this.showStatus('อัพโหลดสำเร็จ!', 'success');
+                        this.loadImageToCanvas(result.url);
+                    } else {
+                        throw new Error(result.error || 'Upload failed');
+                    }
+                } catch (error) {
+                    console.error('Upload error:', error);
+                    this.showStatus('เกิดข้อผิดพลาดในการอัพโหลด: ' + error.message, 'error');
+                    
+                    // Fallback: load image locally for testing
+                    this.loadImageFromFile(file);
+                }
+            }
+
+            loadImageFromFile(file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    this.loadImageToCanvas(e.target.result);
+                };
+                reader.readAsDataURL(file);
+            }
+
+            loadImageToCanvas(imageSrc) {
+                const img = new Image();
+                img.onload = () => {
+                    this.image = img;
+                    this.createCanvas();
+                    this.showControls();
+                };
+                img.src = imageSrc;
+            }
+
+            createCanvas() {
+                const preview = document.getElementById('imagePreview');
+                preview.innerHTML = '';
+
+                // Create canvas container
+                this.canvasContainer = document.createElement('div');
+                this.canvasContainer.className = 'canvas-container';
+                this.canvasContainer.style.position = 'relative';
+
+                // Create canvas
+                this.canvas = document.createElement('canvas');
+                this.canvas.id = 'imageCanvas';
+                
+                // Calculate display size (max width 600px)
+                const maxWidth = 600;
+                const scale = Math.min(1, maxWidth / this.image.width);
+                const displayWidth = this.image.width * scale;
+                const displayHeight = this.image.height * scale;
+
+                // Set canvas size to original image size
+                this.canvas.width = this.image.width;
+                this.canvas.height = this.image.height;
+                
+                // Set display size
+                this.canvas.style.width = displayWidth + 'px';
+                this.canvas.style.height = displayHeight + 'px';
+
+                this.ctx = this.canvas.getContext('2d');
+                this.ctx.drawImage(this.image, 0, 0);
+
+                this.canvasContainer.appendChild(this.canvas);
+                preview.appendChild(this.canvasContainer);
+
+                // Add click event
+                this.canvas.addEventListener('click', (e) => this.handleCanvasClick(e));
+
+                this.currentScale = scale;
+            }
+
+            handleCanvasClick(e) {
+                const rect = this.canvas.getBoundingClientRect();
+                const scaleX = this.canvas.width / rect.width;
+                const scaleY = this.canvas.height / rect.height;
+
+                const x = Math.round((e.clientX - rect.left) * scaleX);
+                const y = Math.round((e.clientY - rect.top) * scaleY);
+
+                this.addAction(x, y);
+            }
+
+            addAction(x, y) {
+                const actionType = document.getElementById('actionType').value;
+                const actionData = document.getElementById('actionData').value;
+
+                if (!actionData.trim()) {
+                    this.showStatus('กรุณาใส่ข้อมูล Action', 'error');
+                    return;
+                }
+
+                // Create action object
+                const action = {
+                    type: actionType,
+                    area: {
+                        x: x - 25, // Center the clickable area
+                        y: y - 25,
+                        width: 50,
+                        height: 50
+                    }
+                };
+
+                // Add action data based on type
+                if (actionType === 'uri') {
+                    action.uri = actionData;
+                } else if (actionType === 'message') {
+                    action.text = actionData;
+                } else if (actionType === 'postback') {
+                    action.data = actionData;
+                }
+
+                this.actions.push(action);
+                this.addPointMarker(x, y);
+                this.updateActionsList();
+                this.showGenerateButton();
+
+                // Clear action data input
+                document.getElementById('actionData').value = '';
+                
+                this.showStatus(`เพิ่ม Action แล้ว (${x}, ${y})`, 'success');
+            }
+
+            addPointMarker(x, y) {
+                const marker = document.createElement('div');
+                marker.className = 'point-marker';
+                marker.style.left = (x / this.canvas.width * this.canvas.offsetWidth) + 'px';
+                marker.style.top = (y / this.canvas.height * this.canvas.offsetHeight) + 'px';
+                marker.title = `จุดที่ ${this.actions.length}: (${x}, ${y})`;
+                
+                this.canvasContainer.appendChild(marker);
+            }
+
+            clearLastPoint() {
+                if (this.actions.length === 0) {
+                    this.showStatus('ไม่มีจุดให้ลบ', 'info');
+                    return;
+                }
+
+                this.actions.pop();
+                const markers = this.canvasContainer.querySelectorAll('.point-marker');
+                if (markers.length > 0) {
+                    markers[markers.length - 1].remove();
+                }
+                
+                this.updateActionsList();
+                this.showStatus('ลบจุดล่าสุดแล้ว', 'info');
+
+                if (this.actions.length === 0) {
+                    this.hideGenerateButton();
+                }
+            }
+
+            clearAllPoints() {
+                this.actions = [];
+                const markers = this.canvasContainer.querySelectorAll('.point-marker');
+                markers.forEach(marker => marker.remove());
+                
+                this.updateActionsList();
+                this.hideGenerateButton();
+                this.showStatus('ลบทุกจุดแล้ว', 'info');
+            }
+
+            updateActionsList() {
+                const container = document.getElementById('actionsContainer');
+                const list = document.getElementById('actionsList');
+
+                if (this.actions.length === 0) {
+                    container.style.display = 'none';
+                    list.innerHTML = '<p style="color: #6c757d; text-align: center;">ยังไม่มี Actions</p>';
+                    return;
+                }
+
+                container.style.display = 'block';
+                list.innerHTML = '';
+
+                this.actions.forEach((action, index) => {
+                    const item = document.createElement('div');
+                    item.className = 'action-item';
+                    
+                    let actionText = '';
+                    if (action.type === 'uri') {
+                        actionText = `🔗 ${action.uri}`;
+                    } else if (action.type === 'message') {
+                        actionText = `💬 ${action.text}`;
+                    } else if (action.type === 'postback') {
+                        actionText = `📤 ${action.data}`;
+                    }
+
+                    item.innerHTML = `
+                        <div>
+                            <strong>จุดที่ ${index + 1}:</strong> ${actionText}<br>
+                            <small>ตำแหน่ง: (${action.area.x + 25}, ${action.area.y + 25})</small>
+                        </div>
+                        <button class="btn btn-danger" onclick="imageMapGen.removeAction(${index})" style="padding: 5px 10px;">ลบ</button>
+                    `;
+                    
+                    list.appendChild(item);
+                });
+            }
+
+            removeAction(index) {
+                this.actions.splice(index, 1);
+                
+                // Remove all markers and redraw them
+                const markers = this.canvasContainer.querySelectorAll('.point-marker');
+                markers.forEach(marker => marker.remove());
+                
+                // Redraw markers
+                this.actions.forEach((action, i) => {
+                    this.addPointMarker(action.area.x + 25, action.area.y + 25);
+                });
+                
+                this.updateActionsList();
+                this.showStatus(`ลบ Action ที่ ${index + 1} แล้ว`, 'info');
+
+                if (this.actions.length === 0) {
+                    this.hideGenerateButton();
+                }
+            }
+
+            generateJson() {
+                if (!this.image || this.actions.length === 0) {
+                    this.showStatus('กรุณาอัพโหลดรูปและเพิ่ม Actions', 'error');
+                    return;
+                }
+
+                const json = {
+                    type: "imagemap",
+                    baseUrl: this.baseUrl || "https://your-server.com/images/imagemap",
+                    altText: "Imagemap generator By EX10",
+                    baseSize: {
+                        width: this.image.width,
+                        height: this.image.height
+                    },
+                    actions: this.actions
+                };
+
+                const jsonString = JSON.stringify(json, null, 2);
+                
+                document.getElementById('jsonContent').textContent = jsonString;
+                document.getElementById('jsonOutput').style.display = 'block';
+                
+                this.showStatus('สร้าง JSON สำเร็จ!', 'success');
+
+                // Scroll to JSON output
+                document.getElementById('jsonOutput').scrollIntoView({ 
+                    behavior: 'smooth' 
+                });
+            }
+
+            copyJson() {
+                const jsonContent = document.getElementById('jsonContent').textContent;
+                
+                navigator.clipboard.writeText(jsonContent).then(() => {
+                    this.showStatus('คัดลอก JSON แล้ว!', 'success');
+                }).catch(err => {
+                    console.error('Copy failed:', err);
+                    this.showStatus('ไม่สามารถคัดลอกได้', 'error');
+                });
+            }
+
+            showControls() {
+                document.getElementById('controlPanel').style.display = 'block';
+            }
+
+            showGenerateButton() {
+                document.getElementById('generateJson').style.display = 'inline-block';
+            }
+
+            hideGenerateButton() {
+                document.getElementById('generateJson').style.display = 'none';
+                document.getElementById('jsonOutput').style.display = 'none';
+            }
+
+            showStatus(message, type) {
+                const statusDiv = document.getElementById('uploadStatus');
+                statusDiv.innerHTML = `<div class="status-message status-${type}">${message}</div>`;
+                
+                if (type === 'success' || type === 'info') {
+                    setTimeout(() => {
+                        statusDiv.innerHTML = '';
+                    }, 3000);
+                }
+            }
+        }
+
+        // Initialize the app
+        const imageMapGen = new ImageMapGenerator();
+
+        // Auto-fill GAS URL if provided
+        window.addEventListener('load', () => {
+            // You can set a default GAS URL here
+            // document.getElementById('gasUrl').value = 'YOUR_DEFAULT_GAS_URL';
+        });
+    </script>
+</body>
+</html>
